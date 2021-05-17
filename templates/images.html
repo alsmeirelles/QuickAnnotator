@@ -42,7 +42,7 @@
     </div>
     <form id="uploadfiles" class="dropzone" action="{{ url_for('api.upload_image', project_name=project.name)}}" method="post" enctype="multipart/form-data" style="padding: 20px; border: 2px dotted lightgrey;">
         <div class="dz-message needsclick">
-            <h3>1. Drop files here or click to upload.</h3>
+            <h3>1. Drop patches here or click to upload.</h3>
         </div>
     </form>
     <script type="text/javascript">
@@ -60,10 +60,10 @@
 
     <br>
     <div style="text-align: center">
-        <a><button id="makePacthButton" disabled class= "btn btn-default" onclick= "make_patches()"><span class="buttonFont" >2. Make Patches</span></button></a>
-        <a><button id="trainAEButton" disabled class= "btn btn-default" onclick= "train_ae()"><span class="buttonFont">3. (Re)train Model 0</span></button></a>
-        <a><button id="makeEmbedButton" disabled class= "btn btn-default" onclick= "make_embed()"><span class="buttonFont">4. Embed Patches</span></button></a>
-        <a href = "{{ url_for('html.plotembed',project_name=project.name) }}"><button id="viewEmbedButton" disabled class= "btn btn-default"><span class="buttonFont">5. View Embedding</span></button></a>
+        <a><button id="newIterationButton" disabled class= "btn btn-default" onclick= "begin_iteration()"><span class="buttonFont" >Begin New Iteration</span></button></a>
+        <a><button id="trainAEButton" disabled class= "btn btn-default" onclick= "train_ae()"><span class="buttonFont">Train Model</span></button></a>
+        <a><button id="makePredButton" disabled class= "btn btn-default" onclick= "make_prediction()"><span class="buttonFont">Make  Prediction</span></button></a>
+        <!-- <a href = "{{ url_for('html.plotembed',project_name=project.name) }}"><button id="viewEmbedButton" disabled class= "btn btn-default"><span class="buttonFont">View Embedding</span></button></a> -->
         <br><br>
         <div>
             <textarea id="notifications" class="logbase notification" readonly>Notifications will appear here.</textarea>
