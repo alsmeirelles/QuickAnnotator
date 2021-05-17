@@ -439,6 +439,7 @@ function resetPanels() {
 
     let info_panel = document.getElementById('info');
     let annotator_panel = document.getElementById('annotator');
+    let canvas_mask = document.querySelector('#canvas_mask');
 
     let browser_width = window.innerWidth;
     let info_width = info_panel.offsetWidth;
@@ -449,12 +450,13 @@ function resetPanels() {
     let info_heading_height = document.getElementById('infohandle').offsetHeight + margin;
 
     let new_info_left = browser_width - info_width - margin;
-    let new_annotator_left = browser_width - annotator_width - margin;
-    let new_info_top = title_bar_bottom + info_heading_height + margin;
+    let new_annotator_left = canvas_mask.offsetWidth + 50;
+    let new_annotator_top = 150;
+    let new_info_top = 150;
     let new_toolbox_top = new_info_top + info_height + margin;
 
     info_panel.style.top = new_info_top + "px";
-    annotator_panel.style.top = new_toolbox_top + "px";
+    annotator_panel.style.top = new_annotator_top + "px";
     info_panel.style.left = new_info_left + "px";
     annotator_panel.style.left = new_annotator_left + "px";
 }
