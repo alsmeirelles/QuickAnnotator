@@ -5,7 +5,7 @@
 window.onscroll = function() {setScroll()};
 
 var updateCropSize = function() {
-  cropSize = Math.pow(2, cropsize_slider.value);
+  cropSize =  cropsize_slider.value; //Math.pow(2, cropsize_slider.value);
 	cropsize_value.innerHTML = cropSize;
 	//Update Cookie with expiring after 1 day
 	setCookie("UserCropSize",cropSize.toString(),1)
@@ -276,7 +276,7 @@ function init() {
             patchSize = getUrlParameter('cropSize');
 
             // update the slider
-            cropsize_slider.value = Math.log2(patchSize);
+            cropsize_slider.value = patchSize; //Math.log2(patchSize);
             updateCropSize();
 
             // turn the starting locations into the centroid since that's
@@ -336,12 +336,12 @@ function init() {
     //Update the cropSize here
     if (getCookie("UserCropSize") != "") {
         cropSize = getCookie("UserCropSize")
-        cropsize_slider.value = Math.log2(cropSize);
+        cropsize_slider.value = cropSize; //Math.log2(cropSize);
     } else {
         // "{{defaultCropSize}}" is a rendered variable see 'rendered_project_image' in QA_html.py
         defaultCropSize = Number("{{defaultCropSize}}");
         // Set default crop size
-        cropsize_slider.value = Math.log2(defaultCropSize);
+        cropsize_slider.value = defaultCropSize; //Math.log2(defaultCropSize);
     }
     updateCropSize();
 
