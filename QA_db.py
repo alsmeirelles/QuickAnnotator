@@ -29,6 +29,8 @@ class Image(db.Model):
     projId = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     name = db.Column(db.Text)
     path = db.Column(db.Text, unique=True)
+    tile = db.Column(db.Text)
+    aliter = db.Column(db.Integer)
     height = db.Column(db.Integer)
     width = db.Column(db.Integer)
     ppixel = db.Column(db.Integer, default=0)

@@ -582,7 +582,7 @@ def upload_image(project_name):
         os.remove(dest)
         dest = dest_png
 
-        # Get image dimension
+    # Get image dimension
     im = PIL.Image.open(dest)
     # Save the new image information to database
     newImage = Image(name=f"{filebase}.png", path=dest, projId=proj.id,
@@ -948,101 +948,4 @@ def get_number_of_objects(img):
     return nobjects
 
 
-#----- to remove code below
-# @api.route("/api/<project_name>/image/<image_name>/mask", methods=["POST"])
-# def upload_mask(project_name, image_name):
-#     proj = Project.query.filter_by(name=project_name).first()
-#     if proj is None:
-#         return jsonify(error=f"project {project_name} doesn't exist"), 400
-#
-#     selected_image = db.session.query(Image).filter_by(projId=proj.id, name=image_name).first()
-#     if selected_image is None:
-#         return jsonify(error=f"{selected_image} inside of project {project_name} doesn't exist"), 400
-#
-#     mask_url = request.form.get('mask', None)
-#
-#     if not mask_url:
-#         return jsonify(error="no mask provided"), 400
-#
-#     mask_folder = f"projects/{project_name}/mask/"
-#     mask_name = image_name.replace(".png", "_mask.png")
-#
-#     mask_data = re.search(r'data:image/png;base64,(.*)', mask_url).group(1)
-#     mask_decoded = base64.b64decode(mask_data)
-#     mask = cv2.imdecode(np.frombuffer(mask_decoded, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
-#     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
-#
-#     if mask.shape[2] > 3:
-#         return jsonify(error="Mask has 4 dimensions? Possible Alpha Channel Issue?"), 400
-#
-#     if not np.all(np.isin(mask, [0, 255])):
-#         return jsonify(error="Non [0,255] incorrect values are saved in the image mask, please check"), 400
-#
-#     #  Update n/p pixel statistics
-#     current_app.logger.info(f'Update P/N pixel count of the image {image_name} in {project_name}')
-#
-#     mask_ppixel = np.count_nonzero(mask[:, :, 1] == 255)
-#     mask_npixel = np.count_nonzero(mask[:, :, 0] == 255)
-#
-#     selected_image.ppixel = mask_ppixel
-#     selected_image.npixel = mask_npixel
-#
-#     cv2.imwrite(mask_folder + mask_name, cv2.cvtColor(mask, cv2.COLOR_RGB2BGR))
-#     db.session.commit()
-#
-#     return jsonify(success=True), 201
-#
-#
-#
-# @api.route("/api/<project_name>/image/<image_name>/roi", methods=["POST"])
-# def upload_roi(project_name, image_name):
-#     current_app.logger.info(f'Uploading roi for project {project_name} and image {image_name}:')
-#
-#     proj = Project.query.filter_by(name=project_name).first()
-#     if proj is None:
-#         return jsonify(error=f"project {project_name} doesn't exist"), 400
-#     current_app.logger.info(f'Project id = {str(proj.id)}')
-#
-#     pointx = request.form.get('pointx', None)
-#     pointy = request.form.get('pointy', None)
-#
-#     roi_url = request.form.get('roi', None)
-#
-#     force = request.form.get('force', False)
-#
-#     if not roi_url:
-#         return jsonify(error="no roi provided"), 401
-#
-#     if not pointx or not pointy:
-#         return jsonify(error="no x , y location provided"), 402
-#
-#     roi_url = re.search(r'data:image/png;base64,(.*)', roi_url).group(1)
-#     roi_base_name = f'{image_name.replace(".png", "_")}{pointx}_{pointy}_roi.png'
-#     roi_name = f'projects/{project_name}/roi/{roi_base_name}'
-#     current_app.logger.info(f'Roi name = {roi_name}')
-#
-#     if db.session.query(Roi).filter_by(name=roi_base_name).first() is not None and not force:
-#         current_app.logger.error('ROI exists at this position.')
-#         return jsonify(error="ROI at this position already exists, enable force to overide",
-#                        roi_name=roi_base_name), 402
-#
-#     # save the file
-#     current_app.logger.info('Writing roi file to disk:')
-#     roi = open(roi_name, "wb")
-#     roi_decoded = base64.b64decode(roi_url)
-#     roi.write(roi_decoded)
-#     roi.close()
-#
-#     # add to database
-#     current_app.logger.info('Storing roi to database:')
-#     parent_image = Image.query.filter_by(name=image_name, projId=proj.id).first()
-#     current_app.logger.info(f'Parent image id = {str(parent_image.id)}')
-#     roi = PIL.Image.open(roi_name)
-#     # Save the new image information to database
-#     newRoi = Roi(name=roi_base_name, path=roi_name, imageId=parent_image.id,
-#                  width=roi.size[0], height=roi.size[1], x=pointx, y=pointy,
-#                  date=datetime.now())
-#     db.session.add(newRoi)
-#     db.session.commit()
-#
-#     return jsonify(success=True, roi=newRoi.as_dict()), 201
+
