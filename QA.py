@@ -33,6 +33,7 @@ def add_project(**kw):
         os.mkdir(os.path.join("projects", projectid, "roi_mask"))
         os.mkdir(os.path.join("projects", projectid, "superpixels"))
         os.mkdir(os.path.join("projects", projectid, "superpixels_boundary"))
+        os.mkdir(os.path.join("projects", projectid, "tiles"))
 
     return kw
 
@@ -52,6 +53,8 @@ def delete_project(instance_id=None, **kw):  # should really be a postprocess bu
     # Check if the project folder exists
     shutil.rmtree(os.path.join("projects", proj.name), ignore_errors=True)
 
+    db.session.delete(proj)
+    db.session.commit()
     pass
 
 

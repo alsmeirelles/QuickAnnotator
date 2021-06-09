@@ -1,6 +1,7 @@
+import os
 import torch
 from QA_config import config
-
+from make_tile_for_patch import make_tile
 
 ################################################################################
 # Output either True or False if cuda is available for deep learning computations.
@@ -54,3 +55,18 @@ def get_file_tail(file_path, lines=20):
         block_number -= 1
     all_read_text = b''.join(reversed(blocks))
     return b'\n'.join(all_read_text.splitlines()[-total_lines_wanted:])
+
+################################################################################
+
+def tile_for_patch(patch):
+
+    wsidir = config.get('common','wsis',fallback='.')
+
+    if not os.path.isdir(wsidir):
+        return None,0,0
+        
+    tile_size = config.getint('common','tilesize',fallback=2000)
+    tile_dest,patch_name = os.path.split(patch)
+
+    return make_tile(patch_name,wsidir,tile_size,tile_dest)
+    

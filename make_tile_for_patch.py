@@ -52,7 +52,7 @@ def check_existing_tile(patch_name,tile_dest):
             tx,ty = int(match.group('x')),int(match.group('y'))
             #Patch should be within 100 pixels from tile borders
             if (tx+100 < px+ps1 <  (tx+ts1-100)) and (ty+100 < py+ps1 <  (ty+ts1-100)):
-                return t
+                return (t,px-tx,py-ty,ps1)
 
     return None
 
@@ -112,7 +112,6 @@ def make_tile(patch_name,wsi_dir,tile_size,tile_dest):
         #mag = 10.0 / float(oslide.properties[openslide.PROPERTY_NAME_MPP_X]);
         if openslide.PROPERTY_NAME_MPP_X in oslide.properties:
             mpp = float(oslide.properties[openslide.PROPERTY_NAME_MPP_X]);
-            print("Image MPP: {}".format(mpp))
             mag = 10.0 / mpp
         elif "XResolution" in oslide.properties:
             mag = 10.0 / float(oslide.properties["XResolution"]);
@@ -151,7 +150,7 @@ def make_tile(patch_name,wsi_dir,tile_size,tile_dest):
 
     oslide.close()
 
-    return (fname,get_patch_position((x,y,tile_size),(px,py,int(pm.group('s1')))))
+    return (fname,*get_patch_position((x,y,tile_size),(px,py,int(pm.group('s1')))))
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ import json
 from QA_config import config, get_database_uri
 from QA_db import Image, Project, Roi, db, Job, get_latest_modelid
 from QA_pool import pool_get_image, pool_run_script, update_completed_job_status
-from QA_utils import get_file_tail
+from QA_utils import get_file_tail,tile_for_patch
 
 api = Blueprint("api", __name__)
 jobs_logger = logging.getLogger('jobs')
@@ -556,19 +556,30 @@ def upload_image(project_name):
 
     file = request.files.get('file')
     filename = file.filename
-
-    dest = f"./projects/{project_name}/{filename}"
+    tilename = None
+    pdest = ""
+    
+    #Make tile for patch
+    tile,x,y,_ = tile_for_patch(f"./projects/{project_name}/{filename}")
+    
+    if tile is None:
+        current_app.logger.info(f'Project = {str(proj.id)}: No WSI directory available')
+        dest = f"./projects/{project_name}/{filename}"
+        # Check if the file name has been used before
+        if os.path.isfile(dest):
+            return jsonify(error="file already exists"), 400
+        file.save(dest)
+        # if it's not a png image
+        filebase, fileext = os.path.splitext(filename)
+    else:
+        pdest = f"./projects/{project_name}/patches/{filename}"
+        tilename = os.path.basename(tile)
+        dest = f"./projects/{project_name}/{tilename}"
+        file.save(pdest)
+        # if it's not a png image
+        filebase, fileext = os.path.splitext(tilename)
+    
     current_app.logger.info(f'Destination = {dest}')
-
-    # Check if the file name has been used before
-
-    if os.path.isfile(dest):
-        return jsonify(error="file already exists"), 400
-
-    file.save(dest)
-
-    # if it's not a png image
-    filebase, fileext = os.path.splitext(filename)
 
     if fileext != ".png":
         current_app.logger.info('Resaving as png:')
@@ -581,11 +592,11 @@ def upload_image(project_name):
         im.save(dest_png, 'png', quality=100)
         os.remove(dest)
         dest = dest_png
-
+    
     # Get image dimension
     im = PIL.Image.open(dest)
     # Save the new image information to database
-    newImage = Image(name=f"{filebase}.png", path=dest, projId=proj.id,
+    newImage = Image(name=f"{filebase}.png", path=dest, projId=proj.id, patch=pdest,x=x,y=y,
                      width=im.size[0], height=im.size[1], date=datetime.now())
     db.session.add(newImage)
     db.session.commit()

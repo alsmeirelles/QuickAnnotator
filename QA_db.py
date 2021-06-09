@@ -29,7 +29,9 @@ class Image(db.Model):
     projId = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     name = db.Column(db.Text)
     path = db.Column(db.Text, unique=True)
-    tile = db.Column(db.Text)
+    patch = db.Column(db.Text)
+    x = db.Column(db.Integer) #X position of the patch inside each tile
+    y = db.Column(db.Integer) #Y position of the patch inside each tile
     aliter = db.Column(db.Integer)
     height = db.Column(db.Integer)
     width = db.Column(db.Integer)
