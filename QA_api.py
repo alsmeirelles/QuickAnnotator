@@ -560,7 +560,7 @@ def upload_image(project_name):
     pdest = ""
     
     #Make tile for patch
-    tile,x,y,_ = tile_for_patch(f"./projects/{project_name}/{filename}")
+    tile,x,y,ps = tile_for_patch(f"./projects/{project_name}/{filename}")
     
     if tile is None:
         current_app.logger.info(f'Project = {str(proj.id)}: No WSI directory available')
@@ -596,7 +596,7 @@ def upload_image(project_name):
     # Get image dimension
     im = PIL.Image.open(dest)
     # Save the new image information to database
-    newImage = Image(name=f"{filebase}.png", path=dest, projId=proj.id, patch=pdest,x=x,y=y,
+    newImage = Image(name=f"{filebase}.png", path=dest, projId=proj.id, patch=pdest,x=x,y=y,patch_size=ps,
                      width=im.size[0], height=im.size[1], date=datetime.now())
     db.session.add(newImage)
     db.session.commit()

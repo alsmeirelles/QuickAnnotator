@@ -271,9 +271,10 @@ function init() {
             restoreSelection();
         } else {
             //  start annotating at that rectangle supplied by the url
-
+	    
             // this is from line 50 of make_embed.py but should really be set programmatically in the future
-            patchSize = getUrlParameter('cropSize');
+            //patchSize = getUrlParameter('cropSize');
+	    patchSize = getUrlParameter('defaultCropSize');
 
             // update the slider
             cropsize_slider.value = patchSize; //Math.log2(patchSize);
@@ -333,15 +334,20 @@ function init() {
     cropped_canvas_left_offset = canvas_cropped_mask.offsetLeft;
     cropped_canvas_top_offset = canvas_cropped_mask.offsetTop;
 
-    //Update the cropSize here
-    if (getCookie("UserCropSize") != "") {
-        cropSize = getCookie("UserCropSize")
-        cropsize_slider.value = cropSize; //Math.log2(cropSize);
+    //Update the cropSize here, first use forced value if provided
+    forceCropSize = Number("{{forceCropSize}}");
+    if (forceCropSize > 0) {
+	cropsize_slider.value = forceCropSize;
     } else {
-        // "{{defaultCropSize}}" is a rendered variable see 'rendered_project_image' in QA_html.py
-        defaultCropSize = Number("{{defaultCropSize}}");
-        // Set default crop size
-        cropsize_slider.value = defaultCropSize; //Math.log2(defaultCropSize);
+	if (getCookie("UserCropSize") != "") {
+            cropSize = getCookie("UserCropSize")
+            cropsize_slider.value = cropSize; //Math.log2(cropSize);
+	} else {
+            // "{{defaultCropSize}}" is a rendered variable see 'rendered_project_image' in QA_html.py
+            defaultCropSize = Number("{{defaultCropSize}}");
+            // Set default crop size
+            cropsize_slider.value = defaultCropSize; //Math.log2(defaultCropSize);
+	}
     }
     updateCropSize();
 

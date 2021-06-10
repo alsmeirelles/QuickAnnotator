@@ -32,6 +32,7 @@ class Image(db.Model):
     patch = db.Column(db.Text)
     x = db.Column(db.Integer) #X position of the patch inside each tile
     y = db.Column(db.Integer) #Y position of the patch inside each tile
+    patch_size = db.Column(db.Integer) #Size in the WSI
     aliter = db.Column(db.Integer)
     height = db.Column(db.Integer)
     width = db.Column(db.Integer)

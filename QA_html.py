@@ -121,7 +121,7 @@ def annotation(project_name, image_name):
     # WHERE image.id = 1
     # GROUP BY image.id
 
-    image = db.session.query(Image.id, Image.projId, Image.name, Image.path, Image.patch, Image.x, Image.y, Image.height, Image.width, Image.date,
+    image = db.session.query(Image.id, Image.projId, Image.name, Image.path, Image.patch, Image.x, Image.y, Image.patch_size, Image.height, Image.width, Image.date,
                              Image.rois, Image.make_patches_time, Image.nobjects,
                              db.func.count(Roi.id).label('nROIs'),
                              (db.func.count(Roi.id) - db.func.ifnull(db.func.sum(Roi.testingROI), 0))
@@ -135,12 +135,13 @@ def annotation(project_name, image_name):
 
     if image.patch:
         x,y = image.x,image.y
-        print("Image is a tile for patch: {}. Start (x,y): {}".format(image.patch,(x,y)))
+        forceCropSize = image.patch_size
+        print("Image is a tile for patch: {}. Start (x,y): {}. Size: {}".format(image.patch,(x,y),defaultCropSize))
     else:
         print("No tile for patch: {}".format(image_name))
         
     return render_template("annotation.html", project=project, image=image, startX=x, startY=y,
-                           defaultCropSize=defaultCropSize)
+                           defaultCropSize=defaultCropSize,forceCropSize=forceCropSize)
 
 
 # For templates which just use the project and image name:
@@ -148,7 +149,11 @@ def rendered_project_image(template_name, project_name, image_name):
     project = Project.query.filter_by(name=project_name).first()
     image = Image.query.filter_by(projId=project.id, name=image_name).first()
     defaultCropSize = config.getint('common', 'patchsize', fallback=256)
-    return render_template(template_name, project=project, image=image, defaultCropSize=defaultCropSize)
+    if image.patch_size > 0:
+        forceCropSize = image.patch_size
+    else:
+        forceCropSize = defaultCropSize
+    return render_template(template_name, project=project, image=image, defaultCropSize=defaultCropSize,forceCropSize=forceCropSize)
 
 
 @html.route('/<project_name>/<image_name>/annotation-main.js', methods=['GET'])

@@ -70,7 +70,7 @@ def make_tile(patch_name,wsi_dir,tile_size,tile_dest):
     """
     Should return the tile and the patch position within this tile.
 
-    Return: tile name, patch position relative to tile (x,y,patch_size)
+    Return: tile name, patch position relative to tile, patch size in magnified tile (tile name,x,y,patch_size)
     """
 
     #First check if alreday exists a tile for this patch
