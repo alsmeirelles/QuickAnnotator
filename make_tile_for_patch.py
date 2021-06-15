@@ -130,8 +130,8 @@ def make_tile(patch_name,wsi_dir,tile_size,tile_dest):
     height = oslide.dimensions[1]    
 
     px,py = int(pm.group('x')),int(pm.group('y'))
-    x = int(px+1.5*int(pm.group('s2'))) - int(tile_size/2)
-    y = int(py+1.5*int(pm.group('s2'))) - int(tile_size/2)
+    x = int(px+0.5*int(pm.group('s1'))) - int(tile_size/2)
+    y = int(py+0.5*int(pm.group('s1'))) - int(tile_size/2)
 
     x = 0 if x < 0 else x
     y = 0 if y < 0 else y
