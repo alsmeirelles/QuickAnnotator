@@ -36,6 +36,15 @@ def get_embed(project_name, image_name):
     upload_folder = f"./projects/{project_name}/patches/"
     return send_from_directory(upload_folder, image_name)
 
+@api.route("/api/<project_name>/generate_train", methods=["GET"])
+def generate_train(project_name):
+    upload_folder = f"./projects/{project_name}/patches/"
+    proj = db.session.query(Project).filter_by(name=project_name).first()
+    if proj is None:
+        return jsonify(error=f"project {project_name} doesn't exist"), 400
+    current_app.logger.info(f'Generate initial training set for project {project_name}:')
+    
+    return send_from_directory(upload_folder)
 
 @api.route("/api/<project_name>/train_autoencoder", methods=["GET"])
 def train_autoencoder(project_name):
@@ -558,6 +567,7 @@ def upload_image(project_name):
     filename = file.filename
     tilename = None
     pdest = ""
+    save_roi = False
     
     #Make tile for patch
     tile,x,y,ps = tile_for_patch(f"./projects/{project_name}/{filename}")
@@ -575,6 +585,10 @@ def upload_image(project_name):
         pdest = f"./projects/{project_name}/patches/{filename}"
         tilename = os.path.basename(tile)
         dest = f"./projects/{project_name}/{tilename}"
+        if os.path.isfile(dest):
+            print("Tile with multiple patches ({tilename})")
+            save_roi = True
+        
         file.save(pdest)
         # if it's not a png image
         filebase, fileext = os.path.splitext(tilename)
@@ -600,6 +614,15 @@ def upload_image(project_name):
                      width=im.size[0], height=im.size[1], date=datetime.now())
     db.session.add(newImage)
     db.session.commit()
+
+    if save_roi:
+        roi_base_name = f'{image_name.replace(".png", "_")}{x}_{y}_roi.png'
+        roi_name = f'projects/{project_name}/roi/{roi_base_name}'
+        newRoi = Roi(name=roi_base_name, path=roi_name, imageId=parent_image.id,
+                    width=w, height=h, x=x, y=y, nobjects = nobjects_roi,
+                    date=datetime.now())
+        db.session.add(newRoi)
+        db.session.commit()        
 
     mask_folder = f"projects/{project_name}/mask/"
     mask_name = f"{filebase}.png".replace(".png", "_mask.png")
@@ -710,7 +733,7 @@ def post_roimask(project_name, image_name):
     selected_image.ppixel = np.count_nonzero(mask[:, :, 1] == 255)
     selected_image.npixel = np.count_nonzero(mask[:, :, 0] == 255)
     
-# -- determine number of new objects from this roi, will need for statistics later
+    # -- determine number of new objects from this roi, will need for statistics later
     nobjects_roi = get_number_of_objects(roimask)
     selected_image.nobjects = get_number_of_objects(mask)
 

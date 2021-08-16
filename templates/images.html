@@ -60,8 +60,8 @@
 
     <br>
     <div style="text-align: center">
-        <a><button id="newIterationButton" disabled class= "btn btn-default" onclick= "begin_iteration()"><span class="buttonFont" >Begin New Iteration</span></button></a>
-        <a><button id="trainAEButton" disabled class= "btn btn-default" onclick= "train_ae()"><span class="buttonFont">Train Model</span></button></a>
+        <a><button id="initialTraining" disabled class= "btn btn-default" onclick= "generate_train()"><span class="buttonFont" >Generate Training Set</span></button></a>
+        <a><button id="startAL" disabled class= "btn btn-default" onclick= "train_ae()"><span class="buttonFont">Start AL</span></button></a>
         <a><button id="makePredButton" disabled class= "btn btn-default" onclick= "make_prediction()"><span class="buttonFont">Make  Prediction</span></button></a>
         <!-- <a href = "{{ url_for('html.plotembed',project_name=project.name) }}"><button id="viewEmbedButton" disabled class= "btn btn-default"><span class="buttonFont">View Embedding</span></button></a> -->
         <br><br>

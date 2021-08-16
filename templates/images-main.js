@@ -19,13 +19,31 @@ function loadRunningTimers() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function updateImagePageButton() {
-    updateMakePatches();
-    updateTrainAE();
-    updateMakeEmbed();
-    updateViewEmbed();
+    //updateMakePatches();
+    //updateTrainAE();
+    //updateMakeEmbed();
+    //updateViewEmbed();
+    updateGenTraining();
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+function updateGenTraining() {
+    let table_name = 'project';
+    let col_name = "id";
+    let operation = '==';
+    let value = "{{ project.id }}";
+    let iteration = getDatabaseQueryResults(table_name, col_name, operation, value).data.objects[0].iteration;
+    if (iteration == -1) {
+        document.getElementById("initialTraining").disabled = false;
+        document.getElementById("initialTraining").title = "Initial training set should be selected.";
+    } else {
+        document.getElementById("initialTraining").disabled = true;
+        document.getElementById("initialTraining").title = "AL has already started.";
+    }    
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function updateMakePatches() {
@@ -116,6 +134,15 @@ function train_ae() {
             "Make_embed is currently unavailable"
     }
     const run_url = new URL("{{ url_for('api.train_autoencoder', project_name=project.name) }}", window.location.origin);
+    return loadObjectAndRetry(run_url, updateImagePageButton)
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+function generate_train() {
+    addNotification("'Generate Training Set' Pressed.")
+
+    const run_url = new URL("{{ url_for('api.generate_train', project_name=project.name) }}", window.location.origin);
     return loadObjectAndRetry(run_url, updateImagePageButton)
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
