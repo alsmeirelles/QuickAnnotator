@@ -121,7 +121,7 @@ def annotation(project_name, image_name):
     # WHERE image.id = 1
     # GROUP BY image.id
 
-    image = db.session.query(Image.id, Image.projId, Image.name, Image.path, Image.patch, Image.x, Image.y, Image.patch_size, Image.height, Image.width, Image.date,
+    image = db.session.query(Image.id, Image.projId, Image.name, Image.path, Image.patch_size, Image.height, Image.width, Image.date,
                              Image.rois, Image.make_patches_time, Image.nobjects,
                              db.func.count(Roi.id).label('nROIs'),
                              (db.func.count(Roi.id) - db.func.ifnull(db.func.sum(Roi.testingROI), 0))
@@ -133,10 +133,12 @@ def annotation(project_name, image_name):
     y = request.args.get('startY', "#")
     defaultCropSize = config.getint('common', 'patchsize', fallback=256)
 
-    if image.patch:
-        x,y = image.x,image.y
+    if image.nROIs > 0:
+        #TODO: Get x,y from ROI
+        roi = db.session.query(Roi,Roi.path,Roi.x,Roi.y).filter_by(imageId=image.id).first()
+        x,y = roi.x,roi.y
         forceCropSize = image.patch_size
-        print("Image is a tile for patch: {}. Start (x,y): {}. Size: {}".format(image.patch,(x,y),defaultCropSize))
+        print("Image is a tile for patch: {}. Start (x,y): {}. Size: {}".format(roi.path,(x,y),defaultCropSize))
     else:
         print("No tile for patch: {}".format(image_name))
         

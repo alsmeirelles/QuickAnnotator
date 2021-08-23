@@ -20,6 +20,7 @@ import time
 import re
 import multiprocessing
 import argparse
+import pickle
 
 from make_tile_for_patch import pf_form
 
@@ -43,12 +44,18 @@ def _run_dir(path):
 
     return rt
 
-def generate_set(path,n,processes=2):
+def generate_set(path,n,nval,cache='.cache',processes=2):
+    """
+    Returns and ndarray of randomly selected items from data pool
+    """
     dlist = []
     files = os.listdir(path)
 
     dirs = list(filter(lambda i:os.path.isdir(os.path.join(path,i)),files))
     multi_dir = True if len(dirs) > 0 else False
+
+    if not os.path.isdir(cache):
+        os.mkdir(cache)
 
     rt = []
     if multi_dir:
@@ -60,7 +67,28 @@ def generate_set(path,n,processes=2):
     else:
         rt = _run_dir(path)
 
-    return rt
+    #Save pool metadata to cache
+    rt = np.asarray(rt)
+    train_idx = np.random.choice(len(rt),n,replace=False)
+    train_set = rt[train_idx]
+    with open(os.path.join(cache,'initial_train.pik'),'wb') as fd:
+        pickle.dump(train_set,fd)
+
+    #Select validation patches if defined
+    val_idx = None
+    val_set = None
+    if nval > 0:
+        val_idx = val_idx = np.random.choice(np.setdiff1d(np.arange(rt.shape[0]),train_idx),nval,replace=False)
+        val_set = rt[val_idx]
+        with open(os.path.join(cache,'val_set.pik'),'wb') as fd:
+            pickle.dump(val_set,fd)
+    #Update pool
+    remove = train_idx if val_idx is None else np.concatenate((train_idx,val_idx),axis=0) 
+    pool = np.delete(rt,remove)
+    with open(os.path.join(cache,'pool.pik'),'wb') as fd:
+        pickle.dump(pool,fd)
+    
+    return (train_set,val_set)
     
 if __name__ == "__main__":
 
@@ -72,16 +100,18 @@ if __name__ == "__main__":
     parser.add_argument('-mp', dest='mp', type=int, 
         help='Use multiprocessing. Number of processes to spawn', default=2,required=False)
     parser.add_argument('-set', dest='set', type=int, 
-        help='Number of patches to select for initial training set', default=500,required=False)    
-    parser.add_argument('-pd', dest='patches_dir', type=str, default=None, 
+        help='Number of patches to select for initial training set', default=500,required=False)
+    parser.add_argument('-valset', dest='valset', type=int, 
+        help='Number of patches to select for validation set', default=100,required=False)        
+    parser.add_argument('-pd', dest='pool', type=str, default=None, 
         help='Patch location.')
     
     config, unparsed = parser.parse_known_args()
 
-    if not os.path.isdir(config.patches_dir):
+    if not os.path.isdir(config.pool):
         sys.exit()
 
-    rt = generate_set(config.patches_dir,config.set,config.mp)
-        
-    print("Total patches available: {}".format(len(rt)))
+    rt = generate_set(config.pool,config.set,config.valset,cache='cache',processes=config.mp)
+    
+    print("Training patches: {}".format(len(rt[0])))
 

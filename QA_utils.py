@@ -2,6 +2,7 @@ import os
 import torch
 from QA_config import config
 from make_tile_for_patch import make_tile
+from make_initial_trainset import generate_set
 
 ################################################################################
 # Output either True or False if cuda is available for deep learning computations.
@@ -69,4 +70,19 @@ def tile_for_patch(patch):
     tile_dest,patch_name = os.path.split(patch)
 
     return make_tile(patch_name,wsidir,tile_size,tile_dest)
-    
+
+
+################################################################################
+def get_initial_train(cache):
+    """
+    Returns a tuple (train set, val set) val set can be None
+    """
+    return generate_set(path=config.get('common','pool'),
+                            n=config.getint('active_learning','initial_set'),
+                            nval=config.getint('active_learning','val_size'),
+                            cache=cache)
+
+
+################################################################################
+def get_metadata_pool():
+    pass

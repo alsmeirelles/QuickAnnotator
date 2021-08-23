@@ -1,9 +1,9 @@
 import base64
 import glob
-import os, re, sys, ast
+import os, re, sys, ast, shutil
 from datetime import datetime
 import logging
-
+import multiprocessing
 
 import PIL.Image
 import cv2
@@ -18,7 +18,7 @@ import json
 from QA_config import config, get_database_uri
 from QA_db import Image, Project, Roi, db, Job, get_latest_modelid
 from QA_pool import pool_get_image, pool_run_script, update_completed_job_status
-from QA_utils import get_file_tail,tile_for_patch
+from QA_utils import get_file_tail,tile_for_patch,get_initial_train
 
 api = Blueprint("api", __name__)
 jobs_logger = logging.getLogger('jobs')
@@ -39,12 +39,87 @@ def get_embed(project_name, image_name):
 @api.route("/api/<project_name>/generate_train", methods=["GET"])
 def generate_train(project_name):
     upload_folder = f"./projects/{project_name}/patches/"
+    cache_folder = f"./projects/{project_name}/cache/"
     proj = db.session.query(Project).filter_by(name=project_name).first()
     if proj is None:
         return jsonify(error=f"project {project_name} doesn't exist"), 400
     current_app.logger.info(f'Generate initial training set for project {project_name}:')
+
+    iset = get_initial_train(cache_folder)
+    save_roi = False
+    processes = config.getint("pooling","npoolthread", fallback=2)
     
-    return send_from_directory(upload_folder)
+    with multiprocessing.Pool(processes=processes) as pool:
+        results = [pool.apply_async(insert_patch_into_DB,(proj,project_name,i,save_roi)) for i in iset[0]]
+        if not iset[1] is None:
+            for v in iset[1]:
+                results.append(pool.apply_async(insert_patch_into_DB,(proj,project_name,v,save_roi)) )
+        rt = [r.get() for r in results]
+
+    return jsonify(success=True), 200
+    #return send_from_directory(upload_folder)
+
+#Insert patches selected by other means other than user manual upload
+def insert_patch_into_DB(proj,project_name,img,save_roi):
+    #Make tile for patch
+    tilename = None
+    pdest = ""
+    filename = os.path.basename(img.getPath())
+    tile,x,y,ps = tile_for_patch(f"./projects/{project_name}/{filename}")
+    newImage = None
+    
+    if tile is None:
+        current_app.logger.info(f'Project = {str(proj.id)}: No WSI directory available')
+        dest = f"./projects/{project_name}/{filename}"
+        # Check if the file name has been used before
+        if os.path.isfile(dest):
+            return jsonify(error="file already exists"), 400
+        shutil.copy(img.getPath(),dest)
+        # if it's not a png image
+        filebase, fileext = os.path.splitext(filename)
+        dim = img.getImgDim()
+    else:
+        pdest = f"./projects/{project_name}/patches/{filename}"
+        tilename = os.path.basename(tile)
+        dest = f"./projects/{project_name}/{tilename}"
+        if os.path.isfile(dest):
+            print(f"Tile with multiple patches ({tilename})")
+            newImage = db.session.query(Image).filter_by(projId=proj.id, name=tilename).first()
+        shutil.copy(img.getPath(),pdest)
+        # if it's not a png image
+        filebase, fileext = os.path.splitext(tilename)
+        # Get image dimension
+        dim = (config.getint("common","tilesize", fallback=2000),)*2
+        #Patches are ROIs from the tile
+        save_roi = True
+        
+    current_app.logger.info(f'Destination = {dest}')
+
+    # Save the new image information to database, if it's a new tile
+    if newImage is None:
+        newImage = Image(name=f"{filebase}.png", path=dest, projId=proj.id,patch_size=ps,
+                        width=dim[0], height=dim[1], date=datetime.now())
+        db.session.add(newImage)
+        db.session.commit()
+
+    if save_roi:
+        roi_base_name = f'{filename.replace(".png", "_")}{x}_{y}_roi.png'
+        roi_name = f'projects/{project_name}/roi/{roi_base_name}'
+        nobjects = db.session.query(Roi).filter_by(imageId=newImage.id).count()
+        #nobjects_roi = get_number_of_objects(roimask)
+        newRoi = Roi(name=roi_base_name, path=roi_name, imageId=newImage.id,
+                    width=ps, height=ps, x=x, y=y, nobjects = nobjects+1,
+                    date=datetime.now())
+        db.session.add(newRoi)
+        db.session.commit()        
+
+    mask_folder = f"projects/{project_name}/mask/"
+    mask_name = f"{filebase}.png".replace(".png", "_mask.png")
+
+    mask = PIL.Image.new('RGB', dim)
+    mask.save(mask_folder + mask_name, "PNG")
+
+    return jsonify(success=True, image=newImage.as_dict()), 201    
 
 @api.route("/api/<project_name>/train_autoencoder", methods=["GET"])
 def train_autoencoder(project_name):

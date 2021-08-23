@@ -34,6 +34,7 @@ def add_project(**kw):
         os.mkdir(os.path.join("projects", projectid, "superpixels"))
         os.mkdir(os.path.join("projects", projectid, "superpixels_boundary"))
         os.mkdir(os.path.join("projects", projectid, "tiles"))
+        os.mkdir(os.path.join("projects", projectid, "cache"))
 
     return kw
 
