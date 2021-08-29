@@ -18,7 +18,7 @@ import json
 from QA_config import config, get_database_uri
 from QA_db import Image, Project, Roi, db, Job, get_latest_modelid
 from QA_pool import pool_get_image, pool_run_script, update_completed_job_status
-from QA_utils import get_file_tail,tile_for_patch,get_initial_train
+from QA_utils import get_file_tail,tile_for_patch,get_initial_train,get_img_metadata
 
 api = Blueprint("api", __name__)
 jobs_logger = logging.getLogger('jobs')
@@ -56,6 +56,10 @@ def generate_train(project_name):
                 results.append(pool.apply_async(insert_patch_into_DB,(proj,project_name,v,save_roi)) )
         rt = [r.get() for r in results]
 
+    #Initial training set selected, start iteration 0
+    proj.iteration = 0
+    db.session.commit()
+    
     return jsonify(success=True), 200
     #return send_from_directory(upload_folder)
 
@@ -81,13 +85,15 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
     else:
         pdest = f"./projects/{project_name}/patches/{filename}"
         tilename = os.path.basename(tile)
+        # if it's not a png image
+        filebase, fileext = os.path.splitext(tilename)
         dest = f"./projects/{project_name}/{tilename}"
         if os.path.isfile(dest):
             print(f"Tile with multiple patches ({tilename})")
             newImage = db.session.query(Image).filter_by(projId=proj.id, name=tilename).first()
+        if os.path.isfile(pdest):
+            return jsonify(error="Tile already exists")
         shutil.copy(img.getPath(),pdest)
-        # if it's not a png image
-        filebase, fileext = os.path.splitext(tilename)
         # Get image dimension
         dim = (config.getint("common","tilesize", fallback=2000),)*2
         #Patches are ROIs from the tile
@@ -640,74 +646,14 @@ def upload_image(project_name):
 
     file = request.files.get('file')
     filename = file.filename
-    tilename = None
-    pdest = ""
     save_roi = False
+    pdest = f"./projects/{project_name}/patches/{filename}"
+    file.save(pdest)
     
-    #Make tile for patch
-    tile,x,y,ps = tile_for_patch(f"./projects/{project_name}/{filename}")
-    
-    if tile is None:
-        current_app.logger.info(f'Project = {str(proj.id)}: No WSI directory available')
-        dest = f"./projects/{project_name}/{filename}"
-        # Check if the file name has been used before
-        if os.path.isfile(dest):
-            return jsonify(error="file already exists"), 400
-        file.save(dest)
-        # if it's not a png image
-        filebase, fileext = os.path.splitext(filename)
-    else:
-        pdest = f"./projects/{project_name}/patches/{filename}"
-        tilename = os.path.basename(tile)
-        dest = f"./projects/{project_name}/{tilename}"
-        if os.path.isfile(dest):
-            print("Tile with multiple patches ({tilename})")
-            save_roi = True
-        
-        file.save(pdest)
-        # if it's not a png image
-        filebase, fileext = os.path.splitext(tilename)
-    
-    current_app.logger.info(f'Destination = {dest}')
+    img = get_img_metadata(pdest)
+    ret = insert_patch_into_DB(proj,project_name,img,save_roi)
 
-    if fileext != ".png":
-        current_app.logger.info('Resaving as png:')
-        dest_png = f"./projects/{project_name}/{filebase}.png"
-        current_app.logger.info(dest_png)
-        current_app.logger.info("saving...")
-        im = PIL.Image.open(dest)
-        im.thumbnail(im.size)
-        current_app.logger.info(im.size)
-        im.save(dest_png, 'png', quality=100)
-        os.remove(dest)
-        dest = dest_png
-    
-    # Get image dimension
-    im = PIL.Image.open(dest)
-    # Save the new image information to database
-    newImage = Image(name=f"{filebase}.png", path=dest, projId=proj.id, patch=pdest,x=x,y=y,patch_size=ps,
-                     width=im.size[0], height=im.size[1], date=datetime.now())
-    db.session.add(newImage)
-    db.session.commit()
-
-    if save_roi:
-        roi_base_name = f'{image_name.replace(".png", "_")}{x}_{y}_roi.png'
-        roi_name = f'projects/{project_name}/roi/{roi_base_name}'
-        newRoi = Roi(name=roi_base_name, path=roi_name, imageId=parent_image.id,
-                    width=w, height=h, x=x, y=y, nobjects = nobjects_roi,
-                    date=datetime.now())
-        db.session.add(newRoi)
-        db.session.commit()        
-
-    mask_folder = f"projects/{project_name}/mask/"
-    mask_name = f"{filebase}.png".replace(".png", "_mask.png")
-
-    mask = PIL.Image.new('RGB', (im.size[0], im.size[1]))
-    mask.save(mask_folder + mask_name, "PNG")
-
-    return jsonify(success=True, image=newImage.as_dict()), 201
-
-
+    return ret
 
 @api.route("/api/<project_name>/roi/<roi_name>/mask", methods=["GET"])
 def get_roimask(project_name, roi_name):

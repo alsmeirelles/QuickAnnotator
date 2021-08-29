@@ -44,6 +44,21 @@ def _run_dir(path):
 
     return rt
 
+def makeImg(path,keep=False):
+    """
+    Returns a PImage object for a given file
+    """
+
+    file_name = os.path.basename(path)
+    rex = re.compile(pf_form)
+    pm = rex.match(file_name)
+    img = None
+    if not pm is None:
+        img = PImage(path,keepImg=keep,origin=pm.group('tcga'),coord=(pm.group('x'),pm.group('y')),
+                         verbose=1)
+
+    return img
+
 def generate_set(path,n,nval,cache='.cache',processes=2):
     """
     Returns and ndarray of randomly selected items from data pool

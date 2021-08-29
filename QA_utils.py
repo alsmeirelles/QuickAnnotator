@@ -2,7 +2,7 @@ import os
 import torch
 from QA_config import config
 from make_tile_for_patch import make_tile
-from make_initial_trainset import generate_set
+from make_initial_trainset import generate_set, makeImg
 
 ################################################################################
 # Output either True or False if cuda is available for deep learning computations.
@@ -82,6 +82,9 @@ def get_initial_train(cache):
                             nval=config.getint('active_learning','val_size'),
                             cache=cache)
 
+################################################################################
+def get_img_metadata(path):
+    return makeImg(path)
 
 ################################################################################
 def get_metadata_pool():
