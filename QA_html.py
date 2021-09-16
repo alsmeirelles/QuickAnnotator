@@ -45,7 +45,7 @@ def get_imagelist(project_name):
                               (db.func.count(Roi.id) - db.func.ifnull(db.func.sum(Roi.testingROI), 0))
                               .label('trainingROIs')). \
         outerjoin(Roi, Roi.imageId == Image.id). \
-        filter(Image.projId == project.id).group_by(Image.id).all()
+        filter(Image.projId == project.id).filter(Roi.acq == project.iteration).group_by(Image.id).all()
     return render_template("images.html", project=project, images=images)
 
 
