@@ -318,13 +318,13 @@ function init() {
     // Make the annotation canvas draggable
 
     // listen on the selected canvas layers for mouse actions:
-    prepareMouseListeners(canvas_bg);
-    prepareMouseListeners(canvas_mask);
-    prepareMouseListeners(canvas_result);
+    //prepareMouseListeners(canvas_bg); - ALSM: disable multi-patch selection for now
+    //prepareMouseListeners(canvas_mask);
+    //prepareMouseListeners(canvas_result);  - ALSM: disable multi-patch selection for now
     prepareToolMouseListeners(canvas_cropped_mask);
     //2/4 added
-    prepareToolMouseListeners(canvas_cropped_bg);
-    prepareToolMouseListeners(canvas_cropped_result);
+    //prepareToolMouseListeners(canvas_cropped_bg);  - ALSM: disable multi-patch selection for now
+    //prepareToolMouseListeners(canvas_cropped_result);  - ALSM: disable multi-patch selection for now
 
     // add global listener since user may release mouse on non-canvas area since we have zoom factor
     prepareGlobalListeners(document);
@@ -361,7 +361,7 @@ function init() {
     //Need to assign an initial value to toggle the image information window
     showOrHideImageInformation( 'visible');
 
-    if ('{{project.iteration}}' == '-1') {
+    if (Number('{{project.iteration}}') < 1) {
         updateTrafficLight('model',colorNOTAVAILABLE)
     } else {updateTrafficLight('model',colorAVAILABLE)}
 
