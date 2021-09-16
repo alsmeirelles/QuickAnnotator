@@ -59,6 +59,7 @@ class Roi(db.Model):
     width = db.Column(db.Integer)
     x = db.Column(db.Integer)
     y = db.Column(db.Integer)
+    acq = db.Column(db.Integer,default=0) #ROI obtained in acquisition NUM
     nobjects = db.Column(db.Integer, default=0)
     date = db.Column(db.DateTime)
 
