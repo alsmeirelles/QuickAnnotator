@@ -48,6 +48,9 @@ def generate_train(project_name):
     iset = get_initial_train(cache_folder)
     save_roi = False
     processes = config.getint("pooling","npoolthread", fallback=2)
+
+    #Initial training set selected, start iteration 0
+    proj.iteration = 0
     
     with multiprocessing.Pool(processes=processes) as pool:
         results = [pool.apply_async(insert_patch_into_DB,(proj,project_name,i,save_roi)) for i in iset[0]]
@@ -55,10 +58,6 @@ def generate_train(project_name):
             for v in iset[1]:
                 results.append(pool.apply_async(insert_patch_into_DB,(proj,project_name,v,save_roi)) )
         rt = [r.get() for r in results]
-
-    #Initial training set selected, start iteration 0
-    proj.iteration = 0
-    db.session.commit()
     
     return jsonify(success=True), 200
     #return send_from_directory(upload_folder)
@@ -113,8 +112,8 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
         roi_name = f'projects/{project_name}/roi/{roi_base_name}'
         nobjects = db.session.query(Roi).filter_by(imageId=newImage.id).count()
         #nobjects_roi = get_number_of_objects(roimask)
-        newRoi = Roi(name=roi_base_name, path=roi_name, imageId=newImage.id,
-                    width=ps, height=ps, x=x, y=y, nobjects = nobjects+1,
+        newRoi = Roi(name=roi_base_name, path=roi_name, testingROI = 0, imageId=newImage.id,
+                    width=ps, height=ps, x=x, y=y, acq=proj.iteration, nobjects = nobjects,
                     date=datetime.now())
         db.session.add(newRoi)
         db.session.commit()        
@@ -736,7 +735,7 @@ def post_roimask(project_name, image_name):
 
     roimaskold = mask[y:y + h, x:x + w, :]
 
-    if np.any(roimaskold != 0) and not force:
+    if not force and np.any(roimaskold != 0):
         current_app.logger.error('ROI exists at this position.')
         return jsonify(error="ROI at this position already exists, enable force to overide"), 402
 
