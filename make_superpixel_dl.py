@@ -81,6 +81,10 @@ try:
     if not os.path.exists(boutdir):
         os.makedirs(boutdir)
 
+    if not os.path.isfile(args.model):
+        print("INFO: No model ready in {}".format(args.model),flush=True)
+        sys.exit(0)
+
     # ----- load network
     device = get_torch_device(args.gpuid)
 
@@ -208,8 +212,17 @@ try:
     print(f"RETVAL: {json.dumps({'model': args.model,'output_file': output_files})}", flush=True)
 
 
-except:
+except SystemExit as ex:
+    if ex.code != 0:
+        track = traceback.format_exc()
+        track = track.replace("\n","\t")
+        print(f"ERROR: {track}", flush=True)
+        sys.exit(1)
+    else:
+        sys.exit(ex.code)
+
+else:
     track = traceback.format_exc()
     track = track.replace("\n","\t")
     print(f"ERROR: {track}", flush=True)
-    sys.exit(1)
+    sys.exit(1)    
