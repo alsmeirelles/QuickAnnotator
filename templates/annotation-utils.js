@@ -17,7 +17,7 @@ function prepareGlobalListeners(which_context) {
     }
     which_context.onmouseup = function (e) {
         annotatorEnabled = true;
-        bgImageEnabler = true;
+        bgImageEnabler = false; //ALSM: disable multi-patch selection for now
     }
 
 }

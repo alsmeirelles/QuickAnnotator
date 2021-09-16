@@ -550,7 +550,7 @@ function prepareToolMouseListeners(which_canvas){
         window.addEventListener('mouseup', function(event) {
             if (!annotatorEnabled) return;
             if (event.button != 0) return; // Make sure it is left clicked
-            bgImageEnabler = true;
+            bgImageEnabler = false; //- ALSM: disable multi-patch selection for now
             if (mousePressed) {
                 mousePressed = false;
                 if (mode == "freehand") {
