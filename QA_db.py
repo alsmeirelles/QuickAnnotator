@@ -29,9 +29,6 @@ class Image(db.Model):
     projId = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     name = db.Column(db.Text)
     path = db.Column(db.Text, unique=True)
-    #patch = db.Column(db.Integer)
-    #x = db.Column(db.Integer) #X position of the patch inside each tile
-    #y = db.Column(db.Integer) #Y position of the patch inside each tile
     patch_size = db.Column(db.Integer) #Size in the WSI
     aliter = db.Column(db.Integer)
     height = db.Column(db.Integer)
@@ -60,6 +57,7 @@ class Roi(db.Model):
     x = db.Column(db.Integer)
     y = db.Column(db.Integer)
     acq = db.Column(db.Integer,default=0) #ROI obtained in acquisition NUM
+    anclass = db.Column(db.Integer,default=-1) #ROI fill class
     nobjects = db.Column(db.Integer, default=0)
     date = db.Column(db.DateTime)
 

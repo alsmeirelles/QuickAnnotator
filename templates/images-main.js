@@ -24,6 +24,7 @@ function updateImagePageButton() {
     //updateMakeEmbed();
     //updateViewEmbed();
     updateGenTraining();
+    updateALStart();
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -40,6 +41,44 @@ function updateGenTraining() {
     } else {
         document.getElementById("initialTraining").disabled = true;
         document.getElementById("initialTraining").title = "AL has already started.";
+    }    
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+function updateALStart() {
+    let table_name = 'project';
+    let col_name = "id";
+    let operation = '==';
+    let value = "{{ project.id }}";
+    let iteration = getDatabaseQueryResults(table_name, col_name, operation, value).data.objects[0].iteration;
+    table_name = 'roi';
+    col_name = 'id';
+    operation = '>';
+    value = 0;
+    let rois_query = getDatabaseQueryResults(table_name, col_name, operation, value)
+    let rois = rois_query.data.num_results;
+    let rois_objects = rois_query.data.objects;
+
+    if (iteration > 0 || iteration == -1) {
+        document.getElementById("startAL").disabled = true;
+        document.getElementById("startAL").title = "AL can not be started yet.";
+    } else {
+	let annotations = 0;
+	addNotification(`Checking annotations for AL start.`);
+	for (let i = 0; i < rois; i++) {
+	    if(rois_objects[i].anclass >= 0) {
+		annotations += 1;
+	    }
+	}
+	if (annotations == rois/2) {
+            document.getElementById("startAL").disabled = false;
+            document.getElementById("startAL").title = "AL can be started.";
+	}
+	else{
+	    addNotification(`Not all patches have been annotated (${rois-annotations}).`);
+	}
     }    
 }
 
@@ -124,6 +163,21 @@ function updateViewEmbed() {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+function start_al() {
+    addNotification("'Start AL' Pressed. Active Learning system will start.")
+    if (checkMake_embed()) {
+        addNotification("The latest model is model 0. The Model 0 is being retrained. No other DL model is available at this moment. \n" +
+            "Make_embed is currently unavailable")
+        document.getElementById("makeEmbedButton").disabled = true;
+        document.getElementById("makeEmbedButton").title = "The latest model is model 0. The Model 0 is being retrained. No other DL model is available at this moment. \n" +
+            "Make_embed is currently unavailable"
+    }
+    const run_url = new URL("{{ url_for('api.start_al', project_name=project.name) }}", window.location.origin);
+    return loadObjectAndRetry(run_url, updateImagePageButton)
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 function train_ae() {
     addNotification("'(Re)train Model 0' Pressed.")
     if (checkMake_embed()) {
@@ -151,7 +205,7 @@ function reload_images() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function generate_train() {
-    addNotification("'Generate Training Set' Pressed.")
+    addNotification("'Generate Training Set' Pressed.This could take some minutes.")
 
     const run_url = new URL("{{ url_for('api.generate_train', project_name=project.name) }}", window.location.origin);
     return loadObjectAndRetry(run_url, reload_images)

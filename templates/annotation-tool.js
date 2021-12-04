@@ -309,12 +309,13 @@ function uploadMaskToServer(dataset) {
         // extract the roi's name from the server response:
         const roi_name = parsed_json.roi.name;
 
-        // add that roi image to either the training or testing set:
+        // add that roi image to either the training or testing set - ALSM:
         let xhr_add_to_traintest = new XMLHttpRequest();
-        let url_add_to_traintest = "{{ url_for('api.add_roi_to_traintest', project_name=project.name, roiname='!!!!!', traintype='#####')}}"
+        let url_add_to_traintest = "{{ url_for('api.add_roi_to_traintest', project_name=project.name, roiname='!!!!!', traintype='#####', roi_class='12345')}}"
 
         url_add_to_traintest = url_add_to_traintest.replace(escape("!!!!!"),roi_name)
         url_add_to_traintest = url_add_to_traintest.replace(escape("#####"),dataset)
+	url_add_to_traintest = url_add_to_traintest.replace("12345",annotation_class)
 
         xhr_add_to_traintest.open('PUT', url_add_to_traintest , true);
         xhr_add_to_traintest.onload = function(){};

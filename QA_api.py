@@ -126,6 +126,14 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
 
     return jsonify(success=True, image=newImage.as_dict()), 201    
 
+@api.route("/api/<project_name>/start_al", methods=["GET"])
+def start_al(project_name):
+    proj = db.session.query(Project).filter_by(name=project_name).first()
+    if proj is None:
+        return jsonify(error=f"project {project_name} doesn't exist"), 400
+    current_app.logger.info(f'Training autoencoder for project {project_name}:')
+
+    
 @api.route("/api/<project_name>/train_autoencoder", methods=["GET"])
 def train_autoencoder(project_name):
     proj = db.session.query(Project).filter_by(name=project_name).first()
@@ -520,11 +528,11 @@ def remove_image_from_traintest(project_name, traintype, roiname):
     return jsonify(success=True, roi=roi.as_dict())
 
 
-@api.route('/api/<project_name>/dataset/<traintype>/<roiname>', methods=["PUT"])
-def add_roi_to_traintest(project_name, traintype, roiname):
+@api.route('/api/<project_name>/dataset/<traintype>/<roiname>/<roi_class>', methods=["PUT"])
+def add_roi_to_traintest(project_name, traintype, roiname, roi_class):
     current_app.logger.info(
         f'Adding new annotation image. Project = {project_name} Training type = {traintype} Name = {roiname}')
-
+    
     roi = db.session.query(Roi).filter_by(name=os.path.basename(roiname.strip())).first()
     if roi is None:
         return jsonify(error=f"{roiname} not found in project {project_name}"), 400
@@ -534,6 +542,8 @@ def add_roi_to_traintest(project_name, traintype, roiname):
         roi.testingROI = 0
     if traintype == "test":
         roi.testingROI = 1
+
+    roi.anclass = 1 if roi_class == "positive" else 0
 
     current_app.logger.info('Committing new image to database:')
     db.session.commit()
