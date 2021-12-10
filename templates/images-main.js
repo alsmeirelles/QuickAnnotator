@@ -72,7 +72,7 @@ function updateALStart() {
 		annotations += 1;
 	    }
 	}
-	if (annotations == rois/2) {
+	if (annotations == rois) {
             document.getElementById("startAL").disabled = false;
             document.getElementById("startAL").title = "AL can be started.";
 	}

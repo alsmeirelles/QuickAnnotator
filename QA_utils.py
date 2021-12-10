@@ -1,8 +1,11 @@
 import os
+import pickle
 import torch
+import numpy as np
 from QA_config import config
 from make_tile_for_patch import make_tile
 from make_initial_trainset import generate_set, makeImg
+from make_alrun import run_active_learning
 
 ################################################################################
 # Output either True or False if cuda is available for deep learning computations.
@@ -87,5 +90,29 @@ def get_img_metadata(path):
     return makeImg(path)
 
 ################################################################################
-def get_metadata_pool():
-    pass
+def get_metadata_pool(cache):
+    pool_file = os.path.join(cache,'pool.pik')
+    pool = None
+    if os.path.isfile(pool_file):
+        with open(pool_file,'rb') as fd:
+            pool = pickle.load(fd)
+    else:
+        print("Something is wrong, no pool file present")
+
+    return np.asarray(pool)
+
+################################################################################
+def run_al(proj_path,rois,config,iteration):
+    cache = os.path.join(proj_path,'cache')
+    pool = get_metadata_pool(cache)
+    train_x, train_y = [],[]
+
+    for r in rois:
+        train_x.append(makeImg(r.alpath))
+        train_y.append(r.anclass)
+    
+    if not pool is None:
+        sel = run_active_learning(pool,(train_x,train_y),config,proj_path,iteration)
+    else:
+        return None
+    

@@ -18,7 +18,7 @@ import json
 from QA_config import config, get_database_uri
 from QA_db import Image, Project, Roi, db, Job, get_latest_modelid
 from QA_pool import pool_get_image, pool_run_script, update_completed_job_status
-from QA_utils import get_file_tail,tile_for_patch,get_initial_train,get_img_metadata
+from QA_utils import get_file_tail,tile_for_patch,get_initial_train,get_img_metadata,run_al
 
 api = Blueprint("api", __name__)
 jobs_logger = logging.getLogger('jobs')
@@ -52,15 +52,21 @@ def generate_train(project_name):
     #Initial training set selected, start iteration 0
     proj.iteration = 0
     
+    rt = multiprocess_insert_patch(iset,proj,project_name,save_roi,processes)
+    
+    return jsonify(success=True), 200
+    #return send_from_directory(upload_folder)
+
+#Multiprocess patch insertion
+def multiprocess_insert_patch(iset,proj,project_name,save_roi,processes):
+    """iset: image set"""
     with multiprocessing.Pool(processes=processes) as pool:
         results = [pool.apply_async(insert_patch_into_DB,(proj,project_name,i,save_roi)) for i in iset[0]]
         if not iset[1] is None:
             for v in iset[1]:
                 results.append(pool.apply_async(insert_patch_into_DB,(proj,project_name,v,save_roi)) )
         rt = [r.get() for r in results]
-    
-    return jsonify(success=True), 200
-    #return send_from_directory(upload_folder)
+    return rt
 
 #Insert patches selected by other means other than user manual upload
 def insert_patch_into_DB(proj,project_name,img,save_roi):
@@ -92,7 +98,7 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
             newImage = db.session.query(Image).filter_by(projId=proj.id, name=tilename).first()
         if os.path.isfile(pdest):
             return jsonify(error="Tile already exists")
-        shutil.copy(img.getPath(),pdest)
+        #shutil.copy(img.getPath(),pdest)
         # Get image dimension
         dim = (config.getint("common","tilesize", fallback=2000),)*2
         #Patches are ROIs from the tile
@@ -102,7 +108,7 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
 
     # Save the new image information to database, if it's a new tile
     if newImage is None:
-        newImage = Image(name=f"{filebase}.png", path=dest, projId=proj.id,patch_size=ps,
+        newImage = Image(name=f"{filebase}.png", path=dest,projId=proj.id,patch_size=ps,
                         width=dim[0], height=dim[1], date=datetime.now())
         db.session.add(newImage)
         db.session.commit()
@@ -111,8 +117,7 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
         roi_base_name = f'{filename.replace(".png", "_")}{x}_{y}_roi.png'
         roi_name = f'projects/{project_name}/roi/{roi_base_name}'
         nobjects = db.session.query(Roi).filter_by(imageId=newImage.id).count()
-        #nobjects_roi = get_number_of_objects(roimask)
-        newRoi = Roi(name=roi_base_name, path=roi_name, testingROI = 0, imageId=newImage.id,
+        newRoi = Roi(name=roi_base_name, path=roi_name, alpath=img.getPath(), testingROI = 0, imageId=newImage.id,
                     width=ps, height=ps, x=x, y=y, acq=proj.iteration, nobjects = nobjects,
                     date=datetime.now())
         db.session.add(newRoi)
@@ -128,11 +133,27 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
 
 @api.route("/api/<project_name>/start_al", methods=["GET"])
 def start_al(project_name):
+    proj_folder = f"./projects/{project_name}/"
     proj = db.session.query(Project).filter_by(name=project_name).first()
     if proj is None:
         return jsonify(error=f"project {project_name} doesn't exist"), 400
-    current_app.logger.info(f'Training autoencoder for project {project_name}:')
+    current_app.logger.info(f'Starting active learning system {project_name}:')
 
+    training_rois = db.session.query(Roi.id, Roi.imageId, Roi.name, Roi.path, Roi.alpath, Roi.testingROI,Roi.height, Roi.width, 
+                                Roi.x, Roi.y, Roi.acq, Roi.anclass) \
+            .filter(Image.projId == proj.id) \
+            .filter(Roi.imageId == Image.id) \
+            .group_by(Roi.id).all()
+            
+    selected = run_al(proj_folder,training_rois,config,proj.iteration)
+    if selected is None:
+        return jsonify(error="No pool available"),400
+    else:
+        proj.iteration += 1
+        processes = config.getint("pooling","npoolthread", fallback=2)
+        current_app.logger.info('Adding selected images to {}: {}'.format(project_name,len(selected)))
+        rt = multiprocess_patch_insert(selected,proj,project_name,False,processes)
+        return jsonify(success=True), 200
     
 @api.route("/api/<project_name>/train_autoencoder", methods=["GET"])
 def train_autoencoder(project_name):
@@ -769,13 +790,27 @@ def post_roimask(project_name, image_name):
 
     # ----
     parent_image = Image.query.filter_by(name=image_name, projId=proj.id).first()
-    current_app.logger.info('Storing roi to database:')
-
-    newRoi = Roi(name=roi_base_name, path=roi_name, imageId=parent_image.id,
-                 width=w, height=h, x=x, y=y, nobjects = nobjects_roi,
-                 date=datetime.now())
-    db.session.add(newRoi)
-    db.session.commit()
+    rois = Roi.query.filter_by(imageId=parent_image.id)
+    newRoi = None
+    for r in rois:
+        if abs(r.x-x) <= 2 and abs(r.y - y) <= 2:
+            newRoi = r
+        else:
+            current_app.logger.info("Found ROI ({}) with different coordinates: ({},{}) against ({},{})".format(r.id,r.x,r.y,x,y))
+            
+    if newRoi:
+        current_app.logger.info("ROI already stored. Original patch: {}".format(newRoi.alpath))
+        newRoi.nobjects = nobjects_roi
+        newRoi.path = roi_name
+        db.session.commit()
+    else:
+        current_app.logger.info('Storing roi to database:')
+        
+        newRoi = Roi(name=roi_base_name, path=roi_name, imageId=parent_image.id,
+                    width=w, height=h, x=x, y=y, nobjects = nobjects_roi,
+                    date=datetime.now())
+        db.session.add(newRoi)
+        db.session.commit()
 
     return jsonify(success=True, roi=newRoi.as_dict()), 201
 

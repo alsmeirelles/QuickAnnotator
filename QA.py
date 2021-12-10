@@ -1,4 +1,4 @@
-import os
+import os,sys
 import shutil
 import logging
 from logging import config
@@ -8,8 +8,10 @@ from flask import Flask
 from flask_restless import APIManager, ProcessingException
 
 import QA_db
-from QA_api import api,delete_image
 from QA_config import config, get_database_uri
+sys.path.append(config.get("active_learning","alsource"))
+
+from QA_api import api,delete_image
 from QA_db import db, Image, Project, Roi, Job
 from QA_html import html
 
@@ -124,9 +126,9 @@ if __name__ == '__main__': #This seems like the correct place to do this
                        results_per_page=0, max_results_per_page=0,)
     app.apimanager.create_api(Job, methods=['GET', 'POST', 'DELETE', 'PUT'], url_prefix='/api/db',
                        results_per_page=0, max_results_per_page=0,)
-
+        
     app.logger.info('Starting up worker pool.')
     QA_db._pool = Pool(processes=config.getint('pooling', 'npoolthread', fallback=4))
-    app.run(host='0.0.0.0', port=config.getint('flask', 'port', fallback=5555), debug=config.getboolean('flask', 'debug', fallback = False))
+    app.run(host='127.0.0.1', port=config.getint('flask', 'port', fallback=5555), debug=config.getboolean('flask', 'debug', fallback = False))
     QA_db._pool.close()
     QA_db._pool.join()

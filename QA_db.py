@@ -51,6 +51,7 @@ class Roi(db.Model):
     imageId = db.Column(db.Integer, db.ForeignKey('image.id'), nullable=False)
     name = db.Column(db.Text)
     path = db.Column(db.Text)
+    alpath = db.Column(db.Text) #Original patch to AL
     testingROI = db.Column(db.Integer, default=-1)
     height = db.Column(db.Integer)
     width = db.Column(db.Integer)
