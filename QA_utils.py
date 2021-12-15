@@ -102,6 +102,12 @@ def get_metadata_pool(cache):
     return np.asarray(pool)
 
 ################################################################################
+def save_updated_pool(cache,pool):
+    pool_file = os.path.join(cache,'pool.pik')
+    with open(pool_file,'wb') as fd:
+        pickle.dump(pool,fd)
+
+################################################################################
 def run_al(proj_path,rois,config,iteration):
     cache = os.path.join(proj_path,'cache')
     pool = get_metadata_pool(cache)
@@ -112,7 +118,12 @@ def run_al(proj_path,rois,config,iteration):
         train_y.append(r.anclass)
     
     if not pool is None:
-        sel = run_active_learning(pool,(train_x,train_y),config,proj_path,iteration)
+        print("Pool size: {}".format(len(pool)))
+        sel,pool = run_active_learning(pool,(train_x,train_y),config,proj_path,iteration)
+        save_updated_pool(cache,pool)
+        print("Updated pool size: {}".format(len(pool)))
+        del(pool)
+        return sel
     else:
         return None
     

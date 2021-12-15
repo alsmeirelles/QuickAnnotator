@@ -31,43 +31,60 @@ from Utils.CacheManager import CacheManager
 def run_active_learning(pool,data,qa_config,proj_path,iteration):
 
     kwargs = {}
-    kwargs['tnet'] = qa_config.get("active_learning","tnet")
-    kwargs['net'] = qa_config.get("active_learning","net")
+    #Data
     kwargs['data'] = "CellRep"
     kwargs['predst'] = qa_config.get("common","pool")
+    kwargs['split'] = (0.9,0.01,0.09)
+    kwargs['tdim'] = (qa_config.getint("active_learning","input_size"),)*2
+    kwargs['delay_load'] = True
+    
+    #Training
+    kwargs['tnet'] = qa_config.get("active_learning","tnet")
+    kwargs['net'] = qa_config.get("active_learning","net")
     kwargs['batch_size'] = qa_config.getint("train_ae","batchsize")
     kwargs['learn_r'] = 0.0005
     kwargs['epochs'] = qa_config.getint("active_learning","alepochs")
-    kwargs['split'] = (0.9,0.01,0.09)
     kwargs['train_set'] = qa_config.getint("active_learning","initial_set")
     kwargs['val_set'] = qa_config.getint("active_learning","val_size")
-    kwargs['phi'] = qa_config.getint("active_learning","phi")
-    kwargs['tnphi'] = qa_config.getint("active_learning","tnphi")
-    kwargs['tdim'] = (qa_config.getint("active_learning","input_size"),)*2
-    kwargs['strategy'] = qa_config.get("active_learning","strategy")
     kwargs['weights_path'] = os.path.join(proj_path,'models')
     kwargs['new_net'] = True
-    kwargs['gpu_count'] = qa_config.getint("cuda","gpucount")
-    kwargs['cpu_count'] = qa_config.getint("pooling","npoolthread")
     kwargs['bdir'] = os.path.join(proj_path,'cache')
     kwargs['cache'] = os.path.join(proj_path,'cache')
-    kwargs['verbose'] = config.getint("common","verbose")
     kwargs['logdir'] = os.path.join(proj_path,'cache')
-    kwargs['progressbar'] = False
-    kwargs['keepimg'] = True
-    kwargs['delay_load'] = True
-    kwargs['debug'] = False
+    kwargs['augment'] = False
+    kwargs['batch_norm'] = False
     kwargs['model_path'] = os.path.join(proj_path,'models')
     kwargs['save_dt'] = False
-    kwargs['spool'] = 2
-    kwargs['pred_size'] = 15000
     kwargs['save_w'] = False
+    kwargs['plw'] = False
+    kwargs['save_var'] = False
+    kwargs['f1period'] = 0
+    kwargs['lyf'] = 0
+    
+    #AL
+    kwargs['phi'] = qa_config.getint("active_learning","phi")
+    kwargs['tnphi'] = qa_config.getint("active_learning","tnphi")
+    kwargs['strategy'] = qa_config.get("active_learning","strategy")
+    kwargs['keepimg'] = True
+    kwargs['spool'] = 1
     kwargs['acquire'] = qa_config.getint("active_learning","aq_size")
     kwargs['clusters'] = 20
     kwargs['ffeat'] = None
     kwargs['recluster'] = 0
     kwargs['ac_function'] = 'dada'
     kwargs['un_function'] = qa_config.get("active_learning","un_function")
+    kwargs['emodels'] = qa_config.getint("active_learning","emodels")
+    kwargs['dropout_steps'] = qa_config.getint("active_learning","dropout_steps")
+    kwargs['sample'] = qa_config.getint("active_learning","subpool")
+    
+    #System
+    kwargs['gpu_count'] = qa_config.getint("cuda","gpucount")
+    kwargs['cpu_count'] = qa_config.getint("pooling","npoolthread")
+    kwargs['verbose'] = qa_config.getint("common","verbose")
+    kwargs['progressbar'] = False
+    kwargs['debug'] = False
+    kwargs['pred_size'] = 15000
+    kwargs['info'] = True
 
     config = SimpleNamespace(**kwargs)
     
@@ -82,13 +99,13 @@ def run_active_learning(pool,data,qa_config,proj_path,iteration):
         'split_ratio.pik':os.path.join(config.cache,'{0}-split_ratio.pik'.format(config.data)),
         'clusters.pik':os.path.join(config.cache,'{0}-clusters.pik'.format(config.data)),
         'data_dims.pik':os.path.join(config.cache,'{0}-data_dims.pik'.format(config.data)),
-        'tiles.pik':os.path.join(config.predst,'tiles.pik'),
+        'tiles.pik':os.path.join(config.cache,'tiles.pik'),
         'test_pred.pik':os.path.join(config.logdir,'test_pred.pik'),
         'cae_model.h5':os.path.join(config.model_path,'cae_model.h5'),
         'vgg16_weights_notop.h5':os.path.join('PretrainedModels','vgg16_weights_notop.h5')}
 
     cache_m = CacheManager(locations=files)
-
+    
     dsm = importlib.import_module('Datasources',config.data)
     ds = getattr(dsm,config.data)(config.predst,config.keepimg,config)
     ts = importlib.import_module('Trainers',config.strategy)
@@ -104,15 +121,30 @@ def run_active_learning(pool,data,qa_config,proj_path,iteration):
     model = trainer.load_modules(config.net,ds)
     model.setPhi(config.phi)
     params['model'] = model
-    params['acquisition'] = iteration    
+    params['acquisition'] = iteration
+    params['config'] = config
     tmodel,sw_thread,_ = trainer._target_net_train(model)
     params['sw_thread'] = sw_thread[0] if len(sw_thread) == 1 else sw_thread
-    params['config'] = config
     params['emodels'] = tmodel
+    params['return_aq'] = True
+    params['single_r'] = False
     
     acq = importlib.import_module('AL','AcquisitionFunctions')
     function = getattr(acq,config.un_function)
 
-    trainer.pool_x = pool
-    trainer.pool_y = None
-    to_annotate = trainer.acquire(function,**params)
+    Y = np.zeros(shape=pool.shape,dtype=np.int8)
+    
+    if config.sample != 1.0:
+        trainer.superp_x = pool
+        trainer.superp_y = Y
+        X,Y,idx = ds.sample_metadata(config.sample,data=(pool,Y))
+        trainer.sample_idx = idx
+        print("Using subpool of size {}".format(len(X)))
+
+    trainer.pool_x = X
+    trainer.pool_y = Y
+    to_annotate,pool = trainer.acquire(function,**params)
+
+    print(to_annotate)
+
+    return (to_annotate,pool)

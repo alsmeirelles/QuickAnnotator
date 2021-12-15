@@ -173,7 +173,7 @@ function start_al() {
             "Make_embed is currently unavailable"
     }
     const run_url = new URL("{{ url_for('api.start_al', project_name=project.name) }}", window.location.origin);
-    return loadObjectAndRetry(run_url, updateImagePageButton)
+    return loadObjectAndRetry(run_url, reload_images)
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

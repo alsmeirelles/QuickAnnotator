@@ -152,7 +152,8 @@ def start_al(project_name):
         proj.iteration += 1
         processes = config.getint("pooling","npoolthread", fallback=2)
         current_app.logger.info('Adding selected images to {}: {}'.format(project_name,len(selected)))
-        rt = multiprocess_patch_insert(selected,proj,project_name,False,processes)
+        rt = multiprocess_insert_patch(selected,proj,project_name,False,processes)
+        current_app.logger.info(f'New patches ready to annotation. Sart iteration {proj.iteration}.')
         return jsonify(success=True), 200
     
 @api.route("/api/<project_name>/train_autoencoder", methods=["GET"])
