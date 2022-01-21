@@ -59,7 +59,7 @@ def generate_train(project_name):
 
 #Multiprocess patch insertion
 def multiprocess_insert_patch(iset,proj,project_name,save_roi,processes):
-    """iset: image set"""
+    """iset: tuple (training image set, validation set)"""
     with multiprocessing.Pool(processes=processes) as pool:
         results = [pool.apply_async(insert_patch_into_DB,(proj,project_name,i,save_roi)) for i in iset[0]]
         if not iset[1] is None:
@@ -152,7 +152,7 @@ def start_al(project_name):
         proj.iteration += 1
         processes = config.getint("pooling","npoolthread", fallback=2)
         current_app.logger.info('Adding selected images to {}: {}'.format(project_name,len(selected)))
-        rt = multiprocess_insert_patch(selected,proj,project_name,False,processes)
+        rt = multiprocess_insert_patch((selected,None),proj,project_name,False,processes)
         current_app.logger.info(f'New patches ready to annotation. Sart iteration {proj.iteration}.')
         return jsonify(success=True), 200
     
