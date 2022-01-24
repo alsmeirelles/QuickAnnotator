@@ -56,10 +56,11 @@ And the following additional python package:
 # Installation
 1. Checkout current repository
 2. Checkout DADA AL from: https://github.com/alsmeirelles/DADA
-You can likely install the python requirements using something like (note python 3+ requirement):
-```
-pip3 install -r requirements.txt
-```
+3. Install requirements through requirements.txt file:
+ You can likely install the python requirements using something like (note python 3+ requirement):
+ ```
+ pip3 install -r requirements.txt
+ ```
 *Note:* The *requirements.txt* under root directory of cuda version 11.
 
 The library versions have been pegged to the current validated ones. 
