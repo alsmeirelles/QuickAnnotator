@@ -60,8 +60,8 @@ It is highly recommended that instalation takes place inside a Python3 Virtual e
  python3 -m venv VENV_DIR
  ```
 
-1. Checkout current repository
-2. Checkout DADA AL from: https://github.com/alsmeirelles/DADA
+1. Clone current repository
+2. Clone DADA AL from: https://github.com/alsmeirelles/DADA
 3. Start virtual environment with:
 ```
  source VENV_DIR/bin/activate
