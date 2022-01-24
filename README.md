@@ -60,10 +60,13 @@ It is highly recommended that instalation takes place inside a Python3 Virtual e
  python3 -m venv VENV_DIR
  ```
 
-# Installation
 1. Checkout current repository
 2. Checkout DADA AL from: https://github.com/alsmeirelles/DADA
-3. Install requirements through requirements.txt file:
+3. Start virtual environment with:
+```
+ source VENV_DIR/bin/activate
+ ```
+5. Install requirements through requirements.txt file:
  You can likely install the python requirements using something like (note python 3+ requirement):
  ```
  pip3 install -r requirements.txt
