@@ -67,7 +67,7 @@ It is highly recommended that instalation takes place inside a Python3 Virtual e
  source VENV_DIR/bin/activate
  ```
 5. Install requirements through requirements.txt file:
- You can likely install the python requirements using something like (note python 3+ requirement):
+
  ```
  pip3 install -r requirements.txt
  ```
