@@ -25,6 +25,7 @@ Tested with Python 3.8
 Requires:
 1. Python 
 2. pip
+3. DADA source
 
 And the following additional python package:
 1. Flask_SQLAlchemy
@@ -61,6 +62,9 @@ And the following additional python package:
  ```
  pip3 install -r requirements.txt
  ```
+4. Edit configuration file, as described bellow
+
+
 *Note:* The *requirements.txt* under root directory of cuda version 11.
 
 The library versions have been pegged to the current validated ones. 
