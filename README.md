@@ -55,6 +55,12 @@ And the following additional python package:
 25. Keras with Keras contrib
 
 # Installation
+It is highly recommended that instalation takes place inside a Python3 Virtual environment, so create one with:
+ ```
+ python3 -m venv VENV_DIR
+ ```
+
+# Installation
 1. Checkout current repository
 2. Checkout DADA AL from: https://github.com/alsmeirelles/DADA
 3. Install requirements through requirements.txt file:
