@@ -26,6 +26,7 @@ Requires:
 1. Python 
 2. pip
 3. DADA source
+4. Tensorflow-gpu (for AL)
 
 And the following additional python package:
 1. Flask_SQLAlchemy
@@ -46,13 +47,12 @@ And the following additional python package:
 16. ttach
 17. albumentations
 18. config
-19. Tensorflow-gpu (for AL)
-20. Pandas
-21. TQDM
-22. Imageio
-23. Imagesize
-24. Imgaug
-25. Keras with Keras contrib
+19. Pandas
+20. TQDM
+21. Imageio
+22. Imagesize
+23. Imgaug
+24. Keras with Keras contrib
 
 # Installation
 It is highly recommended that instalation takes place inside a Python3 Virtual environment, so create one with:
