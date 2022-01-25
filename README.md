@@ -63,15 +63,24 @@ It is highly recommended that instalation takes place inside a Python3 Virtual e
 1. Clone current repository
 2. Clone DADA AL from: https://github.com/alsmeirelles/DADA
 3. Start virtual environment with:
-```
- source VENV_DIR/bin/activate
  ```
-5. Install requirements through requirements.txt file:
+ source VENV_DIR/bin/activate
+  ```
+ 4. Install Tensorflow
+ - If a GPU is available:
+ ```
+pip3 install tensorflow-gpu==1.15.5
+```
+- If not:
+ ```
+ pip3 install tensorflow==1.15.5
+ ```
+ 5. Install other requirements through requirements.txt file:
 
  ```
  pip3 install -r requirements.txt
  ```
-4. Edit configuration file, as described bellow
+6. Edit configuration file, as described bellow
 
 
 *Note:* The *requirements.txt* under root directory of cuda version 11.
