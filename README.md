@@ -107,6 +107,10 @@ The general guides for installing Pytorch can be summarized as following:
 # Basic Usage
 ---
 see [UserManual](https://github.com/choosehappy/QuickAnnotator/wiki/User-Manual) for a demo
+
+### Creating a patch pool
+WSIs involved in the experiment must first be split into patches.
+
 ### Run
 
 Go to your checkout dir and start the web server:
@@ -145,6 +149,8 @@ Some configuration parameters should be defined by the user before he/she can st
 - un_function = Uncertainty function to use, which should correspond to selected strategy (see DADA repository docs)
 - dropout_steps = number of forward passes for MC Dropout strategy
 - alepochs = number of epochs to train each intermediary model (Ex: 50 epochs)
+- phi = network auto-reduction (NAR) coefficient, higher means faster selection with possible quality reduction
+
 # Advanced Usage
 ---
 See [wiki](https://github.com/choosehappy/QuickAnnotator/wiki)
