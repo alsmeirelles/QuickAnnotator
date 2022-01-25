@@ -139,9 +139,12 @@ Some configuration parameters should be defined by the user before he/she can st
 - wsis = Path to where the slides are located
 - pool = Path to the pool of patches extracted from the slides
 
-2. in *active_learning*:
+2. In *active_learning*:
 - alsource = Path to DADA source code
-
+- strategy = One of EnsembleALTrainer (ensemble approach) or ActiveLearningTrainer (MC Dropout)
+- un_function = Uncertainty function to use, which should correspond to selected strategy (see DADA repository docs)
+- dropout_steps = number of forward passes for MC Dropout strategy
+- alepochs = number of epochs to train each intermediary model (Ex: 50 epochs)
 # Advanced Usage
 ---
 See [wiki](https://github.com/choosehappy/QuickAnnotator/wiki)
