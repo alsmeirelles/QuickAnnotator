@@ -75,7 +75,8 @@ pip3 install tensorflow-gpu==1.15.5
  ```
  pip3 install tensorflow==1.15.5
  ```
- 5. Install other requirements through requirements.txt file:
+ 5. Install Openslide C library (available in multiple distribution package formats https://openslide.org/download/)
+ 6. Install other requirements through requirements.txt file:
 
  ```
  pip3 install -r requirements.txt
