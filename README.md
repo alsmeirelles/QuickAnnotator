@@ -111,6 +111,12 @@ see [UserManual](https://github.com/choosehappy/QuickAnnotator/wiki/User-Manual)
 ### Creating a patch pool
 WSIs involved in the experiment must first be split into patches.
 
+A script to execute patch extraction from slides is available in the Utils folder of DADA source tree and can be run as so:
+```
+python3 WSITile.py -ds path_to_slides_folder -od patch_destination_folder 
+```
+Optionally, patch size can be defined with the -ps option.
+
 ### Run
 
 Go to your checkout dir and start the web server:
