@@ -13,6 +13,8 @@ function loadRunningTimers() {
     const project_id = "{{ project.id }}";
     const completed_callback_function = updateImagePageButton;
     loadRunningJobsForProject(project_id, completed_callback_function);
+    pollFunc(updateALStart, 60000, 10000);
+
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,6 +48,20 @@ function updateGenTraining() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+function pollFunc(fn, timeout, interval) {
+    var startTime = (new Date()).getTime();
+    interval = interval || 1000,
+    canPoll = true;
+
+    (function p() {
+        canPoll = ((new Date).getTime() - startTime ) <= timeout;
+        if (!fn() && canPoll)  { // ensures the function exucutes
+            setTimeout(p, interval);
+        }
+    })();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function updateALStart() {
     let table_name = 'project';
@@ -75,9 +91,11 @@ function updateALStart() {
 	if (annotations == rois) {
             document.getElementById("startAL").disabled = false;
             document.getElementById("startAL").title = "AL can be started.";
+	    return true;
 	}
 	else{
 	    addNotification(`Not all patches have been annotated (${rois-annotations}).`);
+	    return false;
 	}
     }    
 }
