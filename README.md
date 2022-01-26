@@ -18,14 +18,21 @@ Our approach involves updating a u-net model while the user provides annotations
 then in real time used to produce. This allows the user to either accept or modify regions of the 
 prediction.
 
+DADA AL minimizes the number of annotated patches needed to train a deep learning model. In this fork of QA, 
+DADA is integrated in the user interface so that an annotator can quickly build a training set for different
+applications. So far, TIL presence in patches is the focus of the present work, which can also be applied to
+other scenarios.
+
 # Requirements
 ---
-Tested with Python 3.8
+Tested with Python 3.7 and 3.8
 
 Requires:
 1. Python 
 2. pip
 3. DADA source
+4. Tensorflow-gpu (for AL)
+5. Openslide C library
 
 And the following additional python package:
 1. Flask_SQLAlchemy
@@ -46,13 +53,12 @@ And the following additional python package:
 16. ttach
 17. albumentations
 18. config
-19. Tensorflow-gpu (for AL)
-20. Pandas
-21. TQDM
-22. Imageio
-23. Imagesize
-24. Imgaug
-25. Keras with Keras contrib
+19. Pandas
+20. TQDM
+21. Imageio
+22. Imagesize
+23. Imgaug
+24. Keras with Keras contrib
 
 # Installation
 It is highly recommended that instalation takes place inside a Python3 Virtual environment, so create one with:
@@ -75,21 +81,23 @@ pip3 install tensorflow-gpu==1.15.5
  ```
  pip3 install tensorflow==1.15.5
  ```
- 5. Install other requirements through requirements.txt file:
+ 5. Install Openslide C library (available in multiple distribution package formats https://openslide.org/download/)
+ 6. Install other requirements through requirements.txt file:
 
  ```
  pip3 install -r requirements.txt
  ```
-6. Edit configuration file, as described bellow
+ 7. Edit configuration file, as described bellow
 
 
-*Note:* The *requirements.txt* under root directory of cuda version 11.
+*Note:* DADA AL was tested with *cuda version 10*.
 
 The library versions have been pegged to the current validated ones. 
 Later versions are likely to work but may not allow for cross-site/version reproducibility
 
 We received some feedback that users could installed *torch*. Here, we provide a detailed guide to install
 *Torch*
+
 ### Torch's Installation
 The general guides for installing Pytorch can be summarized as following:
 1. Check your NVIDIA GPU Compute Capability @ *https://developer.nvidia.com/cuda-gpus* 
@@ -99,17 +107,31 @@ The general guides for installing Pytorch can be summarized as following:
 # Basic Usage
 ---
 see [UserManual](https://github.com/choosehappy/QuickAnnotator/wiki/User-Manual) for a demo
+
+### Creating a patch pool
+WSIs involved in the experiment must first be split into patches.
+
+A script to execute patch extraction from slides is available in the Utils folder of DADA source tree and can be run as so:
+```
+python3 WSITile.py -ds path_to_slides_folder -od patch_destination_folder 
+```
+Optionally, patch size can be defined with the -ps option.
+
 ### Run
+
+Go to your checkout dir and start the web server:
 ```
- E:\Study\Research\QA\qqqqq\test1\quick_annotator>python QA.py
+python QA.py
 ```
-By default, it will start up on *localhost:5555*. Note that *5555* is the port number setting in [config.ini](https://github.com/choosehappy/QuickAnnotator/blob/main/config/config.ini#L6) and user should confirm {port number} is not pre-occupied by other users on the host. 
+By default, it will start up on *127.0.0.1:5555*. Note that *5555* is the port number setting in [config.ini](https://github.com/choosehappy/QuickAnnotator/blob/main/config/config.ini#L6) and user should confirm {port number} is not pre-occupied by other users on the host. 
 
 *Warning*: virtualenv will not work with paths that have spaces in them, so make sure the entire path to `env/` is free of spaces.
+
 ### Config Sections
 There are many modular functions in QA whose behaviors could be adjusted by hyper-parameters. These hyper-parameters can 
-be set in the *config.ini* file
+be set in the *config.ini* file, inside config dir
 - [common]
+- [active_learning]
 - [flask]
 - [cuda]
 - [sqlalchemy]
@@ -122,6 +144,18 @@ be set in the *config.ini* file
 - [frontend]
 - [superpixel]
 
+Some configuration parameters should be defined by the user before he/she can start using the interface. These are:
+1. In *common*:
+- wsis = Path to where the slides are located
+- pool = Path to the pool of patches extracted from the slides
+
+2. In *active_learning*:
+- alsource = Path to DADA source code
+- strategy = One of EnsembleALTrainer (ensemble approach) or ActiveLearningTrainer (MC Dropout)
+- un_function = Uncertainty function to use, which should correspond to selected strategy (see DADA repository docs)
+- dropout_steps = number of forward passes for MC Dropout strategy
+- alepochs = number of epochs to train each intermediary model (Ex: 50 epochs)
+- phi = network auto-reduction (NAR) coefficient, higher means faster selection with possible quality reduction
 
 # Advanced Usage
 ---
