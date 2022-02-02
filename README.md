@@ -115,7 +115,7 @@ A script to execute patch extraction from slides is available in the Utils folde
 ```
 python3 WSITile.py -ds path_to_slides_folder -od patch_destination_folder 
 ```
-Optionally, patch size can be defined with the -ps option.
+Optionally, patch size can be defined with the -ps option. A multiproccess extraction can be done with the -mp option (i.e -mp 4).
 
 ### Run
 
