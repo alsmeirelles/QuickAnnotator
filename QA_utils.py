@@ -3,9 +3,6 @@ import pickle
 import torch
 import numpy as np
 from QA_config import config
-from make_tile_for_patch import make_tile
-from make_initial_trainset import generate_set, makeImg
-from make_alrun import run_active_learning
 
 ################################################################################
 # Output either True or False if cuda is available for deep learning computations.
@@ -63,11 +60,12 @@ def get_file_tail(file_path, lines=20):
 ################################################################################
 
 def tile_for_patch(patch):
-
+    from make_tile_for_patch import make_tile
+    
     wsidir = config.get('common','wsis',fallback='.')
 
     if not os.path.isdir(wsidir):
-        return None,0,0
+        return None,0,0,0
         
     tile_size = config.getint('common','tilesize',fallback=2000)
     tile_dest,patch_name = os.path.split(patch)
@@ -80,6 +78,8 @@ def get_initial_train(cache):
     """
     Returns a tuple (train set, val set) val set can be None
     """
+    from make_initial_trainset import generate_set
+    
     return generate_set(path=config.get('common','pool'),
                             n=config.getint('active_learning','initial_set'),
                             nval=config.getint('active_learning','val_size'),
@@ -87,6 +87,8 @@ def get_initial_train(cache):
 
 ################################################################################
 def get_img_metadata(path):
+    from make_initial_trainset import makeImg
+    
     return makeImg(path)
 
 ################################################################################
@@ -109,6 +111,9 @@ def save_updated_pool(cache,pool):
 
 ################################################################################
 def run_al(proj_path,rois,config,iteration):
+    from make_initial_trainset import makeImg
+    from make_alrun import run_active_learning
+    
     cache = os.path.join(proj_path,'cache')
     pool = get_metadata_pool(cache)
     train_x, train_y = [],[]

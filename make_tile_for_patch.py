@@ -99,7 +99,7 @@ def make_tile(patch_name,wsi_dir,tile_size,tile_dest):
 
     if wsi is None:
         print("The Whole Slide Image from which patch {} come from is not available".format(patch_name))
-        return None
+        return None,0,0,0
     else:
         print("Extracting tile from {};".format(wsi))
     
