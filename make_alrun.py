@@ -19,7 +19,7 @@ import importlib
 import math
 
 from types import SimpleNamespace
-from keras.preprocessing.image import ImageDataGenerator
+from keras import backend as K
 
 #AL System imports
 from AL.Common import load_model_weights
@@ -117,16 +117,16 @@ def run_active_learning(pool,spool,acq_idx,data,qa_config,proj_path,iteration):
     if global_trainer is None:
         ts = importlib.import_module('Trainers',config.strategy)
         trainer = getattr(ts,config.strategy)(config)
-        trainer.train_x = data[0][:kwargs['val_set']]
-        trainer.train_y = data[1][:kwargs['val_set']]
-        trainer.val_x = data[0][kwargs['val_set']:]
-        trainer.val_y = data[1][kwargs['val_set']:]
+        trainer.train_x = data[0][:-kwargs['val_set']]
+        trainer.train_y = data[1][:-kwargs['val_set']]
+        trainer.val_x = data[0][-kwargs['val_set']:]
+        trainer.val_y = data[1][-kwargs['val_set']:]
         trainer.pool_size = qa_config.getint("active_learning","subpool")
         Y = np.zeros(shape=spool.shape,dtype=np.int8)
         trainer.superp_x = spool
         trainer.superp_y = Y
 
-        if not pool is None
+        if not pool is None:
             print("Using cached subpool: {} patches".format(len(pool)))
             trainer.pool_x = pool
             trainer.pool_y = Y
@@ -140,8 +140,10 @@ def run_active_learning(pool,spool,acq_idx,data,qa_config,proj_path,iteration):
         else:
             trainer.pool_x = spool
             trainer.pool_y = Y
-            
+
+        global_trainer = trainer
     else:
+        K.clear_session()
         trainer = global_trainer
 
     params = {}

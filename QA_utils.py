@@ -127,6 +127,10 @@ def save_update_idx(cache,acq_idx):
 def get_metadata_acqidx(cache):
     acq_file = os.path.join(cache,'acq_idx.pik')
     acq = None
+
+    if not os.path.isfile(acq_file):
+        return None
+    
     with open(acq_file,'rb') as fd:
         acq = pickle.load(fd)
     return acq
@@ -147,14 +151,14 @@ def run_al(proj_path,rois,config,iteration):
         train_x.append(makeImg(r.alpath))
         train_y.append(r.anclass)
     
-    if not pool is None:
-        print("Pool size: {}".format(len(pool)))
+    if not spool is None:
+        print("Superpool size: {}".format(len(spool)))
         sel,pool,spool,acq_idx = run_active_learning(pool,spool,acq_idx,(train_x,train_y),config,proj_path,iteration)
         save_updated_pool(cache,pool)
         save_updated_pool(cache,spool,True)
         save_update_idx(cache,acq_idx)
         print("Updated pool size: {}".format(len(pool)))
-        print("Superpool pool size: {}".format(len(spool)))
+        print("Superpool size: {}".format(len(spool)))
         del(pool)
         del(spool)
         return sel
