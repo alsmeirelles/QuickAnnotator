@@ -269,7 +269,7 @@ function getUnfinishedJobId(project_id, image_id, command_name) {
  * or do nothing if it doesn't exist.
  */
 function startJobCheckerIfExists(project_id, image_id, command_name, completed_callback_function, indicationTarget ='') {
-    const retry_seconds = 5; // note: this value is usually received from the backend but we're using a default value
+    const retry_seconds = 10; // note: this value is usually received from the backend but we're using a default value
     const job_id = getUnfinishedJobId(project_id, image_id, command_name);
     if (job_id) {
         addNotification('We found a running job for ' + command_name +

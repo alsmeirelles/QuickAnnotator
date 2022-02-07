@@ -92,30 +92,55 @@ def get_img_metadata(path):
     return makeImg(path)
 
 ################################################################################
-def get_metadata_pool(cache):
-    pool_file = os.path.join(cache,'pool.pik')
+def get_metadata_pool(cache,sp=False):
+    if sp:
+        pool_file = os.path.join(cache,'spool.pik')
+    else:
+        pool_file = os.path.join(cache,'pool.pik')
     pool = None
     if os.path.isfile(pool_file):
         with open(pool_file,'rb') as fd:
             pool = pickle.load(fd)
     else:
-        print("Something is wrong, no pool file present")
-
+        print("Something is wrong, no {} file present".format(pool_file))
+        return None
+    
     return np.asarray(pool)
 
 ################################################################################
-def save_updated_pool(cache,pool):
-    pool_file = os.path.join(cache,'pool.pik')
+def save_updated_pool(cache,pool,sp=False):
+    if sp:
+        pool_file = os.path.join(cache,'spool.pik')
+    else:
+        pool_file = os.path.join(cache,'pool.pik')
     with open(pool_file,'wb') as fd:
         pickle.dump(pool,fd)
 
 ################################################################################
+def save_update_idx(cache,acq_idx):
+    acq_file = os.path.join(cache,'acq_idx.pik')
+
+    with open(acq_file,'wb') as fd:
+        pickle.dump(acq_idx,fd)
+        
+################################################################################
+def get_metadata_acqidx(cache):
+    acq_file = os.path.join(cache,'acq_idx.pik')
+    acq = None
+    with open(acq_file,'rb') as fd:
+        acq = pickle.load(fd)
+    return acq
+
+################################################################################
+
 def run_al(proj_path,rois,config,iteration):
     from make_initial_trainset import makeImg
     from make_alrun import run_active_learning
     
     cache = os.path.join(proj_path,'cache')
     pool = get_metadata_pool(cache)
+    spool = get_metadata_pool(cache,sp=True)
+    acq_idx = get_metadata_acqidx(cache)
     train_x, train_y = [],[]
 
     for r in rois:
@@ -124,10 +149,14 @@ def run_al(proj_path,rois,config,iteration):
     
     if not pool is None:
         print("Pool size: {}".format(len(pool)))
-        sel,pool = run_active_learning(pool,(train_x,train_y),config,proj_path,iteration)
+        sel,pool,spool,acq_idx = run_active_learning(pool,spool,acq_idx,(train_x,train_y),config,proj_path,iteration)
         save_updated_pool(cache,pool)
+        save_updated_pool(cache,spool,True)
+        save_update_idx(cache,acq_idx)
         print("Updated pool size: {}".format(len(pool)))
+        print("Superpool pool size: {}".format(len(spool)))
         del(pool)
+        del(spool)
         return sel
     else:
         return None

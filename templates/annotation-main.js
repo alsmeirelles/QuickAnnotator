@@ -144,14 +144,14 @@ function loadRunningJobTimers() {
     // (superpixels & predictions are loaded when the image loads in init)
 
     // retraining (this is not image-specific)
-    const command = 'retrain_dl';
-    const callback = reloadPrediction;
+    //const command = 'retrain_dl';
+    //const callback = reloadPrediction;
     // (placeholder for how to potentially use image_id for other jobs)
     // const image_id = {{ image.id }};
-    const image_id = null;
-    let indicationTarget = 'model'
+    //const image_id = null;
+    //let indicationTarget = 'model'
 
-    startJobCheckerIfExists(project_id, image_id, command, callback, indicationTarget);
+    //startJobCheckerIfExists(project_id, image_id, command, callback, indicationTarget);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -259,7 +259,7 @@ function init() {
         loadImageAndRetry(superpixel_url, ctx_superpixel_ori, drawSuperpixels, false, 'superpixel');
 
         // load any prediction:
-        reloadPrediction();
+        //reloadPrediction();
 
         // now automatically start annotating a patch
         startX = getUrlParameter('startX');

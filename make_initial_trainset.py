@@ -100,7 +100,7 @@ def generate_set(path,n,nval,cache='.cache',processes=2):
     #Update pool
     remove = train_idx if val_idx is None else np.concatenate((train_idx,val_idx),axis=0) 
     pool = np.delete(rt,remove)
-    with open(os.path.join(cache,'pool.pik'),'wb') as fd:
+    with open(os.path.join(cache,'spool.pik'),'wb') as fd:
         pickle.dump(pool,fd)
     
     return (train_set,val_set)

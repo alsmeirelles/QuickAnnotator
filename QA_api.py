@@ -131,8 +131,8 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
 
     return jsonify(success=True, image=newImage.as_dict()), 201    
 
-@api.route("/api/<project_name>/start_al", methods=["GET"])
-def start_al(project_name):
+@api.route("/api/<project_name>/get_al_patches", methods=["GET"])
+def get_al_patches(project_name):
     proj_folder = f"./projects/{project_name}/"
     proj = db.session.query(Project).filter_by(name=project_name).first()
     if proj is None:
@@ -144,7 +144,8 @@ def start_al(project_name):
             .filter(Image.projId == proj.id) \
             .filter(Roi.imageId == Image.id) \
             .group_by(Roi.id).all()
-            
+
+    current_app.logger.info('Retrieved {} annotated training patches (Project {})'.format(len(training_rois),project_name))
     selected = run_al(proj_folder,training_rois,config,proj.iteration)
     if selected is None:
         return jsonify(error="No pool available"),400

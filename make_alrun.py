@@ -27,9 +27,12 @@ from Trainers import ThreadedGenerator
 from Trainers.GenericTrainer import Trainer
 from Utils.CacheManager import CacheManager
 
+global_trainer = None
 
-def run_active_learning(pool,data,qa_config,proj_path,iteration):
+def run_active_learning(pool,spool,acq_idx,data,qa_config,proj_path,iteration):
 
+    global global_trainer
+    
     kwargs = {}
     #Data
     kwargs['data'] = "CellRep"
@@ -67,6 +70,7 @@ def run_active_learning(pool,data,qa_config,proj_path,iteration):
     kwargs['strategy'] = qa_config.get("active_learning","strategy")
     kwargs['keepimg'] = True
     kwargs['spool'] = 1
+    kwargs['spool_f'] = None
     kwargs['acquire'] = qa_config.getint("active_learning","aq_size")
     kwargs['clusters'] = 20
     kwargs['ffeat'] = None
@@ -108,13 +112,37 @@ def run_active_learning(pool,data,qa_config,proj_path,iteration):
     
     dsm = importlib.import_module('Datasources',config.data)
     ds = getattr(dsm,config.data)(config.predst,config.keepimg,config)
-    ts = importlib.import_module('Trainers',config.strategy)
-    trainer = getattr(ts,config.strategy)(config)
 
-    trainer.train_x = data[0][:kwargs['val_set']]
-    trainer.train_y = data[1][:kwargs['val_set']]
-    trainer.val_x = data[0][kwargs['val_set']:]
-    trainer.val_y = data[1][kwargs['val_set']:]
+    Y = None
+    if global_trainer is None:
+        ts = importlib.import_module('Trainers',config.strategy)
+        trainer = getattr(ts,config.strategy)(config)
+        trainer.train_x = data[0][:kwargs['val_set']]
+        trainer.train_y = data[1][:kwargs['val_set']]
+        trainer.val_x = data[0][kwargs['val_set']:]
+        trainer.val_y = data[1][kwargs['val_set']:]
+        trainer.pool_size = qa_config.getint("active_learning","subpool")
+        Y = np.zeros(shape=spool.shape,dtype=np.int8)
+        trainer.superp_x = spool
+        trainer.superp_y = Y
+
+        if not pool is None
+            print("Using cached subpool: {} patches".format(len(pool)))
+            trainer.pool_x = pool
+            trainer.pool_y = Y
+            trainer.acq_idx = acq_idx
+        elif config.sample != 1.0:
+            X,Y,idx = ds.sample_metadata(config.sample,data=(trainer.superp_x,Y))
+            trainer.sample_idx = idx
+            print("Generating new subpool: {} patches".format(len(X)))
+            trainer.pool_x = X
+            trainer.pool_y = Y
+        else:
+            trainer.pool_x = spool
+            trainer.pool_y = Y
+            
+    else:
+        trainer = global_trainer
 
     params = {}
     
@@ -132,19 +160,8 @@ def run_active_learning(pool,data,qa_config,proj_path,iteration):
     acq = importlib.import_module('AL','AcquisitionFunctions')
     function = getattr(acq,config.un_function)
 
-    Y = np.zeros(shape=pool.shape,dtype=np.int8)
-    
-    if config.sample != 1.0:
-        trainer.superp_x = pool
-        trainer.superp_y = Y
-        X,Y,idx = ds.sample_metadata(config.sample,data=(pool,Y))
-        trainer.sample_idx = idx
-        print("Using subpool of size {}".format(len(X)))
-
-    trainer.pool_x = X
-    trainer.pool_y = Y
     to_annotate,pool = trainer.acquire(function,**params)
-
+        
     print(to_annotate)
 
-    return (to_annotate,pool)
+    return (to_annotate,pool,trainer.superp_x,trainer.acq_idx)
