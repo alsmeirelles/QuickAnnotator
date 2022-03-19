@@ -36,7 +36,7 @@ def run_active_learning(pool,spool,acq_idx,data,qa_config,proj_path,iteration):
     kwargs = {}
     #Data
     kwargs['data'] = "CellRep"
-    kwargs['predst'] = qa_config.get("common","pool")
+    kwargs['predst'] = qa_config.get("common","pool").rstrip('/')
     kwargs['split'] = (0.9,0.01,0.09)
     kwargs['tdim'] = (qa_config.getint("active_learning","input_size"),)*2
     kwargs['delay_load'] = True

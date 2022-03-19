@@ -62,7 +62,7 @@ def get_file_tail(file_path, lines=20):
 def tile_for_patch(patch):
     from make_tile_for_patch import make_tile
     
-    wsidir = config.get('common','wsis',fallback='.')
+    wsidir = config.get('common','wsis',fallback='.').rstrip('/')
 
     if not os.path.isdir(wsidir):
         return None,0,0,0
