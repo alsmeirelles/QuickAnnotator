@@ -60,6 +60,27 @@ function updateGenTraining() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+function annotatedRois(image_id, elementID) {
+    table_name = 'roi';
+    col_name = 'imageId';
+    operation = '==';
+    let rois_query = getDatabaseQueryResults(table_name, col_name, operation, image_id)
+    let rois = rois_query.data.num_results;
+    let rois_objects = rois_query.data.objects;
+
+    let annotations = 0;
+    //addNotification(`Checking annotations for AL start.`);
+    for (let i = 0; i < rois; i++) {
+	if(rois_objects[i].anclass >= 0) {
+	    annotations += 1;
+	}
+    }
+
+    document.getElementById(elementID).innerHTML = annotations;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function updateALStart() {

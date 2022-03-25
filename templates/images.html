@@ -19,6 +19,7 @@
     <script src="{{ url_for('static', filename='js/dropzone.js') }}"></script>
     <script src="{{ url_for('static', filename='js/qa-utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery-ui.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jss.js') }}"></script>
     <script src="{{ url_for('html.images_main' , project_name=project.name) }}"></script>
 </head>
 
@@ -82,8 +83,10 @@
                     <div class="desc">{{ image["name"]}}</div>
                     <p align="center">{{image["width"]}} x {{image["height"]}}</p>
                     <dl class="dl-horizontal">
-                        <dt>Annotated patches</dt>
+                        <dt>Total patches</dt>
                         <dd id="patches">{{ image.ROIs}}</dd>
+		        <dt>Annotated patches</dt>
+                        <dd id="anpatches_{{ image.id }}"><script>annotatedRois( {{ image.id }}, "anpatches_{{ image.id }}") </script></dd>
                         <dt>Training patches</dt>
                         <dd id="training_patches">{{ image.trainingROIs }}</dd>
                         <dt>Annotated objects</dt>
@@ -91,8 +94,8 @@
                         <dt>Image completion</dt>
                         <dd id="annotated_percentage_{{ image.id }}" >N/A</dd>
                         <script>
-                            updatePercentCompleted({{ image.width }},{{ image.height }},{{ image.ppixel }},{{ image.npixel }},"annotated_percentage_{{ image.id }}")
-                        </script>
+			updatePercentCompleted({{ image.width }},{{ image.height }},{{ image.ppixel }},{{ image.npixel }},"annotated_percentage_{{ image.id }}")
+			</script>
                     </dl>
                     </div>
                 </div>
