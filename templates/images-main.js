@@ -106,6 +106,12 @@ function updateALStart() {
 	for (let i = 0; i < rois; i++) {
 	    if(rois_objects[i].anclass >= 0) {
 		annotations += 1;
+		elementID = `anpatches_${rois_objects[i].imageId}`;
+		obj = document.getElementById(elementID);
+		if (obj) {
+		    obj.innerHTML = 1;
+ 		}
+
 	    }
 	}
 	if (annotations == rois) {
@@ -147,6 +153,11 @@ function updateGetPatches() {
 	for (let i = 0; i < rois; i++) {
 	    if(rois_objects[i].anclass >= 0) {
 		annotations += 1;
+		elementID = `anpatches_${rois_objects[i].imageId}`;
+		obj = document.getElementById(elementID);
+		if (obj) {
+		    obj.innerHTML = 1;
+ 		}
 	    }
 	}
 	if (annotations == rois) {
@@ -244,6 +255,7 @@ function updateViewEmbed() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function start_al() {
     addNotification("'Start AL' Pressed. Active Learning system will start.")
+    addNotification("'Start AL' Pressed. This can take up to 15 minutes.")
  
     const run_url = new URL("{{ url_for('api.get_al_patches', project_name=project.name) }}", window.location.origin);
     return loadObjectAndRetry(run_url, reload_images)
