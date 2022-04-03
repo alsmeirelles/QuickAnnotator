@@ -311,12 +311,15 @@ function uploadMaskToServer(dataset) {
 
         // add that roi image to either the training or testing set - ALSM:
         let xhr_add_to_traintest = new XMLHttpRequest();
-        let url_add_to_traintest = "{{ url_for('api.add_roi_to_traintest', project_name=project.name, roiname='!!!!!', traintype='#####', roi_class='12345')}}"
+        //let url_add_to_traintest = "{{ url_for('api.add_roi_to_traintest', project_name=project.name, roiname='!!!!!', traintype='#####', roi_class='12345') }}";
+	let url_add_to_traintest = "{{ url_for('api.add_roi_to_traintest', project_name=project.name, roiname='roi_name', traintype='dtset', roi_class='annotation_class') }}";
+	
+        url_add_to_traintest = url_add_to_traintest.replace(escape("roi_name"),roi_name)
+        url_add_to_traintest = url_add_to_traintest.replace(escape("dtset"),dataset)
+	url_add_to_traintest = url_add_to_traintest.replace("annotation_class",annotation_class)
 
-        url_add_to_traintest = url_add_to_traintest.replace(escape("!!!!!"),roi_name)
-        url_add_to_traintest = url_add_to_traintest.replace(escape("#####"),dataset)
-	url_add_to_traintest = url_add_to_traintest.replace("12345",annotation_class)
-
+	console.log(url_add_to_traintest);
+	
         xhr_add_to_traintest.open('PUT', url_add_to_traintest , true);
         xhr_add_to_traintest.onload = function(){};
         xhr_add_to_traintest.send();
