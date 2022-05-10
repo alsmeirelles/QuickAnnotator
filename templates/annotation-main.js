@@ -262,8 +262,7 @@ function init() {
         //reloadPrediction();
 
         // now automatically start annotating a patch
-        startX = getUrlParameter('startX');
-        startY = getUrlParameter('startY');
+	addNotification(`startX=${startX}; startY=${startY}.`);
         if (startX === '' || startY === '') {
             //Relocate the selection rectangle to the center of the image
             cropped_center_x = 0.5 * canvas_bg.width;
@@ -274,7 +273,7 @@ function init() {
 	    
             // this is from line 50 of make_embed.py but should really be set programmatically in the future
             //patchSize = getUrlParameter('cropSize');
-	    patchSize = getUrlParameter('defaultCropSize');
+	    //patchSize = getUrlParameter('defaultCropSize');
 
             // update the slider
             cropsize_slider.value = patchSize; //Math.log2(patchSize);

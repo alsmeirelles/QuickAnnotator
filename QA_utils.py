@@ -69,6 +69,7 @@ def tile_for_patch(patch):
         
     tile_size = config.getint('common','tilesize',fallback=2000)
     tile_dest,patch_name = os.path.split(patch)
+    tile_dest = os.path.join(tile_dest,'tiles')
 
     return make_tile(patch_name,wsidir,tile_size,tile_dest)
 

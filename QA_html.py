@@ -134,10 +134,11 @@ def annotation(project_name, image_name):
     defaultCropSize = config.getint('common', 'patchsize', fallback=256)
 
     if image.nROIs > 0:
-        #TODO: Get x,y from ROI
-        roi = db.session.query(Roi,Roi.path,Roi.x,Roi.y).filter_by(imageId=image.id).first()
+        rois = db.session.query(Roi,Roi.path,Roi.x,Roi.y).filter_by(imageId=image.id,acq=project.iteration).all()
+        roi = rois[0]
         x,y = roi.x,roi.y
         forceCropSize = image.patch_size
+        print("Rois in tile:\n {}".format("\n".join(["- X {}; Y {}".format(r.x,r.y) for r in rois])))
         print("Image is a tile for patch: {}. Start (x,y): {}. Size: {}".format(roi.path,(x,y),defaultCropSize))
     else:
         print("No tile for patch: {}".format(image_name))

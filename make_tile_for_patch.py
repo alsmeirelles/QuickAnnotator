@@ -51,20 +51,26 @@ def check_existing_tile(patch_name,tile_dest):
         if tw == wsi:
             tx,ty = int(match.group('x')),int(match.group('y'))
             #Patch should be within 100 pixels from tile borders
-            if (tx+100 < px+ps1 <  (tx+ts1-100)) and (ty+100 < py+ps1 <  (ty+ts1-100)):
-                return (t,px-tx,py-ty,ps1)
+            if (tx+100 < px <  (tx+ts1-(ps1+100))) and (ty+100 < py <  (ty+ts1-(ps1+100))):
+                print(f"px: {px}; tx: {tx}; py: {py}; ty: {ty}")
+                return (t,*get_patch_position((tx,ty,ts1,ts2),(px,py,int(pm.group('s1')))))
+                #return (t,px-tx,py-ty,ps1)
 
     return None
 
 def get_patch_position(tile,patch):
     """
-    tile: tuple -> (tile x position, tile y position, tile size)
+    tile: tuple -> (tile x position, tile y position, original tile size, output tile size)
     patch: tuple -> (patch x position, patch y position, patch size)
     """
-    tx,ty,ts = tile
+    tx,ty,ts1,ts2 = tile
     px,py,ps = patch
 
-    return (px-tx,py-ty,ps)
+    #Adjust coordinates to output tile size
+    px = round((px-tx) * (ts2/ts1))
+    py = round((py-ty) * (ts2/ts1))
+
+    return (px,py,ps)
 
 def make_tile(patch_name,wsi_dir,tile_size,tile_dest):
     """
@@ -130,27 +136,27 @@ def make_tile(patch_name,wsi_dir,tile_size,tile_dest):
     height = oslide.dimensions[1]    
 
     px,py = int(pm.group('x')),int(pm.group('y'))
-    x = int(px+0.5*int(pm.group('s1'))) - int(tile_size/2)
-    y = int(py+0.5*int(pm.group('s1'))) - int(tile_size/2)
+    x = int(px+0.5*int(pm.group('s1'))) - int(pw_amp/2)
+    y = int(py+0.5*int(pm.group('s1'))) - int(pw_amp/2)
 
     x = 0 if x < 0 else x
     y = 0 if y < 0 else y
     
-    if x + tile_size > width:
-        x = x - ((x + tile_size) - width) 
+    if x + pw_amp > width:
+        x = x - ((x + pw_amp) - width) 
 
-    if y + tile_size > height:
-        y = y - ((y + tile_size) - width) 
+    if y + pw_amp > height:
+        y = y - ((y + pw_amp) - width) 
 
     print("Making tile from position ({},{}) for patch ({},{})".format(x,y,px,py))
-    patch = oslide.read_region((x, y), 0, (tile_size, tile_size));
+    patch = oslide.read_region((x, y), 0, (pw_amp, pw_amp));
     fname = '{}/{}-{}-{}-{}-{}.png'.format(tile_dest, pwsi, x, y, pw_amp, out_pw);
     patch = patch.resize((out_pw, out_pw), Image.ANTIALIAS);
     patch.save(fname);
 
     oslide.close()
 
-    return (fname,*get_patch_position((x,y,tile_size),(px,py,int(pm.group('s1')))))
+    return (fname,*get_patch_position((x,y,pw_amp,tile_size),(px,py,int(pm.group('s1')))))
 
 
 if __name__ == "__main__":
