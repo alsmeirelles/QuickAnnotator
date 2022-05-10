@@ -92,12 +92,14 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
         tilename = os.path.basename(tile)
         # if it's not a png image
         filebase, fileext = os.path.splitext(tilename)
-        dest = f"./projects/{project_name}/{tilename}"
+        dest = f"./projects/{project_name}/tiles/{tilename}"
         if os.path.isfile(dest):
-            print(f"Tile with multiple patches ({tilename})")
             newImage = db.session.query(Image).filter_by(projId=proj.id, name=tilename).first()
+            if not newImage is None:
+                print(f"Tile with multiple patches ({tilename})")
+                print("Tile in db: {}".format(newImage))
         if os.path.isfile(pdest):
-            return jsonify(error="Tile already exists")
+            return jsonify(error="Patch already exists")
         #shutil.copy(img.getPath(),pdest)
         # Get image dimension
         dim = (config.getint("common","tilesize", fallback=2000),)*2
@@ -577,13 +579,13 @@ def add_roi_to_traintest(project_name, traintype, roiname, roi_class):
 @api.route("/api/<project_name>/image/<image_name>", methods=["GET"])
 def get_image(project_name, image_name):
     current_app.logger.info(f"Outputting file {image_name}")
-    return send_from_directory(f"./projects/{project_name}", image_name)
+    return send_from_directory(f"./projects/{project_name}/tiles", image_name)
 
 @api.route("/api/<project_name>/image/<image_name>/thumbnail", methods=["GET"])
 def get_image_thumb(project_name, image_name):
     width = request.form.get('width', 250)
 
-    img = cv2.imread(f"./projects/{project_name}/{image_name}")
+    img = cv2.imread(f"./projects/{project_name}/tiles/{image_name}")
 
     height = int(img.shape[0] * width / img.shape[1])
     dim = (width, height)
@@ -754,7 +756,7 @@ def post_roimask(project_name, image_name):
     if -1 == x or -1 == y:
         return jsonify(error="no x , y location provided"), 402
 
-    img = cv2.imread(f"./projects/{project_name}/{image_name}")
+    img = cv2.imread(f"./projects/{project_name}/tiles/{image_name}")
     if y + h > img.shape[0] or x + w > img.shape[1] or y < 0 or x < 0:
         return jsonify(f"ROI not within image, roi xy ({x} ,{y}) vs image size ({img.shape[0]}, {img.shape[1]})"), 400
 
