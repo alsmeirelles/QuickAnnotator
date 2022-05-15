@@ -14,7 +14,7 @@ function loadRunningTimers() {
     const completed_callback_function = updateImagePageButton;
     loadRunningJobsForProject(project_id, completed_callback_function);
     pollFunc(updateALStart, 600000, 10000);
-    pollFunc(updateGetPatches, 900000, 10000);
+    pollFunc(updateGetPatches, 1200000, 10000);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

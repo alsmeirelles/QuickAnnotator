@@ -96,6 +96,11 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
         if os.path.isfile(dest):
             newImage = db.session.query(Image).filter_by(projId=proj.id, name=tilename).first()
             if not newImage is None:
+                if proj.iteration == newImage.aliter:
+                    newImage = None
+                else:
+                    newImage.aliter = proj.iteration
+
                 print(f"Tile with multiple patches ({tilename})")
                 print("Tile in db: {}".format(newImage))
         if os.path.isfile(pdest):
@@ -111,7 +116,7 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
     # Save the new image information to database, if it's a new tile
     if newImage is None:
         newImage = Image(name=f"{filebase}.png", path=dest,projId=proj.id,patch_size=ps,
-                        width=dim[0], height=dim[1], date=datetime.now())
+                        width=dim[0], height=dim[1], date=datetime.now(),aliter=proj.iteration)
         db.session.add(newImage)
         db.session.commit()
 
@@ -984,16 +989,32 @@ def get_superpixels_boundary(project_name, image_name):
 
 @api.route("/api/<project_name>/image/<image_name>/<direction>", methods=["GET"])
 def prevnext_image(project_name, image_name, direction):
+    def find_current(images,curr_image):
+        for i in range(len(images)):
+            if images[i].id == curr_image.id:
+                return i
+        return -1
+            
     project = Project.query.filter_by(name=project_name).first()
     curr_image = Image.query.filter_by(projId=project.id, name=image_name).first()
 
     # To do: we can not prev the "first image" and "next" the last image, need to make it periodic
+    #images = Image.query.filter((Image.aliter == curr_image.aliter) & (Image.projId == project.id)).all()
+    images = db.session.query(Image.id, Image.projId, Image.name, Image.path, Image.height, Image.width, Image.date,
+                              Image.rois, Image.make_patches_time, Image.npixel, Image.ppixel, Image.nobjects,
+                              db.func.count(Roi.id).label('ROIs'),
+                              (db.func.count(Roi.id) - db.func.ifnull(db.func.sum(Roi.testingROI), 0))
+                              .label('trainingROIs')). \
+        outerjoin(Roi, Roi.imageId == Image.id). \
+        filter(Image.projId == project.id).filter(Roi.acq == project.iteration).group_by(Image.id).all()
+    index = find_current(images,curr_image)
+    
     if (direction == "previous"):
-        image = Image.query.filter((Image.id < curr_image.id) & (Image.projId == project.id)) \
-            .order_by(Image.id.desc()).first()
+        index = index-1 if index > 0 else -1
     else:
-        image = Image.query.filter((Image.id > curr_image.id) & (Image.projId == project.id)) \
-            .order_by(Image.id.asc()).first()
+        index = index+1 if index < len(images)-1 else -1
+
+    image = images[index] if index >= 0 else None
 
     current_app.logger.info(f"{project_name} -- {image_name} --- {direction}")
 
