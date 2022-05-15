@@ -53,6 +53,7 @@ def check_existing_tile(patch_name,tile_dest):
             #Patch should be within 100 pixels from tile borders
             if (tx+100 < px <  (tx+ts1-(ps1+100))) and (ty+100 < py <  (ty+ts1-(ps1+100))):
                 print(f"px: {px}; tx: {tx}; py: {py}; ty: {ty}")
+                ts2 = int(match.group('s2'))
                 return (t,*get_patch_position((tx,ty,ts1,ts2),(px,py,int(pm.group('s1')))))
                 #return (t,px-tx,py-ty,ps1)
 
@@ -146,7 +147,7 @@ def make_tile(patch_name,wsi_dir,tile_size,tile_dest):
         x = x - ((x + pw_amp) - width) 
 
     if y + pw_amp > height:
-        y = y - ((y + pw_amp) - width) 
+        y = y - ((y + pw_amp) - height) 
 
     print("Making tile from position ({},{}) for patch ({},{})".format(x,y,px,py))
     patch = oslide.read_region((x, y), 0, (pw_amp, pw_amp));
