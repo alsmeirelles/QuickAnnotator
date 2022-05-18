@@ -62,21 +62,26 @@ function updateGenTraining() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function annotatedRois(image_id, elementID) {
-    table_name = 'roi';
-    col_name = 'imageId';
-    operation = '==';
+    let table_name = 'roi';
+    let col_name = 'imageId';
+    let operation = '==';
     let rois_query = getDatabaseQueryResults(table_name, col_name, operation, image_id)
     let rois = rois_query.data.num_results;
     let rois_objects = rois_query.data.objects;
 
+    table_name = 'project';
+    col_name = "id";
+    operation = '==';
+    let value = "{{ project.id }}";
+    let iteration = getDatabaseQueryResults(table_name, col_name, operation, value).data.objects[0].iteration;    
+
     let annotations = 0;
     //addNotification(`Checking annotations for AL start.`);
     for (let i = 0; i < rois; i++) {
-	if(rois_objects[i].anclass >= 0) {
+	if((rois_objects[i].anclass >= 0) && (iteration == rois_objects[i].acq)) {
 	    annotations += 1;
 	}
     }
-
     document.getElementById(elementID).innerHTML = annotations;
 }
 
@@ -106,12 +111,13 @@ function updateALStart() {
 	for (let i = 0; i < rois; i++) {
 	    if(rois_objects[i].anclass >= 0) {
 		annotations += 1;
-		elementID = `anpatches_${rois_objects[i].imageId}`;
-		obj = document.getElementById(elementID);
-		if (obj) {
-		    obj.innerHTML = 1;
- 		}
-
+		if(iteration == rois_objects[i].acq) {
+		    elementID = `anpatches_${rois_objects[i].imageId}`;
+		    obj = document.getElementById(elementID);
+		    if (obj) {
+			obj.innerHTML = 1;
+ 		    }
+		}
 	    }
 	}
 	if (annotations == rois) {
@@ -153,10 +159,12 @@ function updateGetPatches() {
 	for (let i = 0; i < rois; i++) {
 	    if(rois_objects[i].anclass >= 0) {
 		annotations += 1;
-		elementID = `anpatches_${rois_objects[i].imageId}`;
-		obj = document.getElementById(elementID);
-		if (obj) {
-		    obj.innerHTML = 1;
+		if(iteration == rois_objects[i].acq) {
+		    elementID = `anpatches_${rois_objects[i].imageId}`;
+		    obj = document.getElementById(elementID);
+		    if (obj) {
+			obj.innerHTML = 1;
+		    }
  		}
 	    }
 	}
