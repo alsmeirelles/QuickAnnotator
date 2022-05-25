@@ -18,7 +18,7 @@ import json
 from QA_config import config, get_database_uri
 from QA_db import Image, Project, Roi, db, Job, get_latest_modelid
 from QA_pool import pool_get_image, pool_run_script, update_completed_job_status
-from QA_utils import get_file_tail,tile_for_patch,get_initial_train,get_img_metadata,run_al
+from QA_utils import get_file_tail,tile_for_patch,get_initial_train,get_img_metadata,run_al,run_al_prediction
 
 api = Blueprint("api", __name__)
 jobs_logger = logging.getLogger('jobs')
@@ -136,7 +136,7 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
     mask = PIL.Image.new('RGB', dim)
     mask.save(mask_folder + mask_name, "PNG")
 
-    return jsonify(success=True, image=newImage.as_dict()), 201    
+    return jsonify(success=True, image=newImage.as_dict()), 200  
 
 @api.route("/api/<project_name>/get_al_patches", methods=["GET"])
 def get_al_patches(project_name):
@@ -150,6 +150,7 @@ def get_al_patches(project_name):
                                 Roi.x, Roi.y, Roi.acq, Roi.anclass) \
             .filter(Image.projId == proj.id) \
             .filter(Roi.imageId == Image.id) \
+            .filter(Roi.testingROI == 0) \
             .group_by(Roi.id).all()
 
     current_app.logger.info('Retrieved {} annotated training patches (Project {})'.format(len(training_rois),project_name))
@@ -163,7 +164,29 @@ def get_al_patches(project_name):
         rt = multiprocess_insert_patch((selected,None),proj,project_name,False,processes)
         current_app.logger.info(f'New patches ready to annotation. Sart iteration {proj.iteration}.')
         return jsonify(success=True), 200
+
+@api.route("/api/<project_name>/make_al_prediction", methods=["GET"])
+def make_al_prediction(project_name):
+    proj_folder = f"./projects/{project_name}/"
+    proj = db.session.query(Project).filter_by(name=project_name).first()
+    rois = db.session.query(Roi.id, Roi.imageId, Roi.name, Roi.path, Roi.alpath, Roi.testingROI,Roi.height, Roi.width, 
+                                Roi.x, Roi.y, Roi.acq, Roi.anclass) \
+            .filter(Image.projId == proj.id) \
+            .filter(Roi.imageId == Image.id) \
+            .group_by(Roi.id).all()
+
+    train,test = [],[]
+
+    for r in rois:
+        if r.testingROI == 1:
+            test.append(r)
+        elif r.testingROI == 0:
+            train.append(r)
+
+    results = run_al_prediction(train,test,config,proj_folder,proj.iteration)
     
+    return jsonify(success=True,data=results), 200
+
 @api.route("/api/<project_name>/train_autoencoder", methods=["GET"])
 def train_autoencoder(project_name):
     proj = db.session.query(Project).filter_by(name=project_name).first()

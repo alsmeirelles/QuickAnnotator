@@ -25,7 +25,6 @@ import pickle
 from make_tile_for_patch import pf_form
 
 #Segframe import
-#sys.path.append('../Segframe')
 from Preprocessing import PImage
 
 def _run_dir(path):

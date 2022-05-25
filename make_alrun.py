@@ -37,13 +37,14 @@ def run_active_learning(pool,spool,acq_idx,data,qa_config,proj_path,iteration):
     #Data
     kwargs['data'] = "CellRep"
     kwargs['predst'] = qa_config.get("common","pool").rstrip('/')
+    kwargs['testdir'] = qa_config.get("common","testset").rstrip('/')
     kwargs['split'] = (0.9,0.01,0.09)
     kwargs['tdim'] = (qa_config.getint("active_learning","input_size"),)*2
     kwargs['delay_load'] = True
     
     #Training
     kwargs['tnet'] = qa_config.get("active_learning","tnet")
-    kwargs['net'] = qa_config.get("active_learning","net")
+    kwargs['network'] = qa_config.get("active_learning","net")
     kwargs['batch_size'] = qa_config.getint("train_ae","batchsize")
     kwargs['learn_r'] = 0.0005
     kwargs['epochs'] = qa_config.getint("active_learning","alepochs")
@@ -69,6 +70,7 @@ def run_active_learning(pool,spool,acq_idx,data,qa_config,proj_path,iteration):
     kwargs['tnphi'] = qa_config.getint("active_learning","tnphi")
     kwargs['strategy'] = qa_config.get("active_learning","strategy")
     kwargs['keepimg'] = True
+    kwargs['tnpred'] = 1
     kwargs['spool'] = 1
     kwargs['spool_f'] = None
     kwargs['acquire'] = qa_config.getint("active_learning","aq_size")
@@ -148,7 +150,7 @@ def run_active_learning(pool,spool,acq_idx,data,qa_config,proj_path,iteration):
 
     params = {}
     
-    model = trainer.load_modules(config.net,ds)
+    model = trainer.load_modules(config.network,ds)
     model.setPhi(config.phi)
     params['model'] = model
     params['acquisition'] = iteration

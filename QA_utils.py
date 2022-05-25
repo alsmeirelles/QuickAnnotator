@@ -166,3 +166,21 @@ def run_al(proj_path,rois,config,iteration):
     else:
         return None
     
+def run_al_prediction(train,test,config,proj_path,iteration):
+    from make_al_prediction import execute_al_prediction
+    from make_initial_trainset import makeImg
+
+    train_x, train_y = [],[]
+    test_x, test_y = None,None
+
+    for r in train:
+        train_x.append(makeImg(r.alpath))
+        train_y.append(r.anclass)
+
+    if not test is None:
+        test_x, test_y = [],[]
+        for r in test:
+            test_x.append(makeImg(r.alpath))
+            test_y.append(r.anclass)
+
+    return execute_al_prediction((train_x,train_y),(test_x,test_y),config,proj_path,iteration)

@@ -40,6 +40,15 @@ function updateImagePageButton() {
     updateGenTraining();
     updateGetPatches();
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+function displayPred() {
+    addNotification("Prediction ready");
+    response = JSON.parse(this.responseText);
+    addNotification(`AUC: ${response.data.auc}`);
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -168,6 +177,8 @@ function updateGetPatches() {
  		}
 	    }
 	}
+	document.getElementById("makePredButton").disabled = false;
+        document.getElementById("makePredButton").title = "Predictions available.";	
 	if (annotations == rois) {
             document.getElementById("getALBatch").disabled = false;
             document.getElementById("getALBatch").title = "A new patch set can be acquired.";
@@ -262,11 +273,32 @@ function updateViewEmbed() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function start_al() {
-    addNotification("'Start AL' Pressed. Active Learning system will start.")
-    addNotification("'Start AL' Pressed. This can take up to 15 minutes.")
+    addNotification("'Start AL' pressed. Active Learning system will start.")
+    addNotification("'Start AL' pressed. This can take up to 15 minutes.")
  
     const run_url = new URL("{{ url_for('api.get_al_patches', project_name=project.name) }}", window.location.origin);
     return loadObjectAndRetry(run_url, reload_images)
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function make_prediction() {
+    addNotification("'Make Prediction' pressed. Test set will be evaluated.")
+    addNotification("Predictions can take some minutes.")
+
+    let xhr = new XMLHttpRequest();
+    let run_url = "{{ url_for('api.make_al_prediction', project_name=project.name) }}";
+    xhr.onreadystatechange = function () {
+	if (this.readyState == 4 && this.status == 200) {
+	    addNotification("Prediction ready");
+	    response = JSON.parse(this.responseText);
+	    document.getElementById("pred").innerHTML = `AUC: ${response.data.auc};   Accuracy: ${response.data.acc}`;
+	}
+    }
+
+    xhr.open("GET", run_url, true);
+    xhr.send();
+    
+    //return loadObjectAndRetry(run_url, displayPred)
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

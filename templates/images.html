@@ -40,38 +40,23 @@
             </div>
         </div>
     </div>
-    <form id="uploadfiles" class="dropzone" action="{{ url_for('api.upload_image', project_name=project.name)}}" method="post" enctype="multipart/form-data" style="padding: 20px; border: 2px dotted lightgrey;">
-        <div class="dz-message needsclick">
-            <h3>1. Drop patches here or click to upload.</h3>
-        </div>
-    </form>
-    <script type="text/javascript">
-        Dropzone.options.uploadfiles = {
-            init: function () {
-                // Set up any event handlers
-                this.on('complete', function (file) {
-                    if (this.getUploadingFiles().length === 0 && this.getQueuedFiles().length === 0) {
-                        location.reload();
-                    }
-                });
-            }
-        };
-    </script>
+    
 
-    <br>
+    <br><br><br>
     <div style="text-align: center">
         <a><button id="initialTraining" disabled class= "btn btn-default" onclick= "generate_train()"><span class="buttonFont" >Generate Training Set</span></button></a>
         <a><button id="startAL" disabled class= "btn btn-default" onclick= "start_al()"><span class="buttonFont">Start AL</span></button></a>
         <a><button id="getALBatch" disabled class= "btn btn-default" onclick= "get_al_batch()"><span class="buttonFont">Get Patch Set</span></button></a>
         <a><button id="makePredButton" disabled class= "btn btn-default" onclick= "make_prediction()"><span class="buttonFont">Make  Prediction</span></button></a>
-        <!-- <a href = "{{ url_for('html.plotembed',project_name=project.name) }}"><button id="viewEmbedButton" disabled class= "btn btn-default"><span class="buttonFont">View Embedding</span></button></a> -->
+        <dt>Last predictions</dt>
+	  <dd id="pred">AUC: -;   Accuracy: -</dd>
         <br><br>
         <div>
             <textarea id="notifications" class="logbase notification" readonly>Notifications will appear here.</textarea>
         </div>
     </div>
 
-    <h3>6. Click on an image below to begin annotation:</h3>
+    <h3>Click on an image below to begin annotation:</h3>
     <div>
         {% for image in images %}
             <div class="responsive" id="{{ image.name }}">
