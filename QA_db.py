@@ -49,6 +49,7 @@ class Image(db.Model):
 class Roi(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     imageId = db.Column(db.Integer, db.ForeignKey('image.id'), nullable=False)
+    projId = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     name = db.Column(db.Text)
     path = db.Column(db.Text)
     alpath = db.Column(db.Text, unique=True) #Original patch to AL

@@ -96,6 +96,16 @@ function annotatedRois(image_id, elementID) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+function getProjRois() {
+    let table_name = 'roi';
+    let col_name = "projId";
+    let operation = '==';
+    let value = "{{ project.id }}";
+    
+    let rois_query = getDatabaseQueryResults(table_name, col_name, operation, value);
+
+    return rois_query;
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function updateALStart() {
     let table_name = 'project';
@@ -103,11 +113,8 @@ function updateALStart() {
     let operation = '==';
     let value = "{{ project.id }}";
     let iteration = getDatabaseQueryResults(table_name, col_name, operation, value).data.objects[0].iteration;
-    table_name = 'roi';
-    col_name = 'id';
-    operation = '>';
-    value = 0;
-    let rois_query = getDatabaseQueryResults(table_name, col_name, operation, value)
+
+    let rois_query = getProjRois();
     let rois = rois_query.data.num_results;
     let rois_objects = rois_query.data.objects;
 
@@ -151,11 +158,7 @@ function updateGetPatches() {
     let value = "{{ project.id }}";
     let iteration = getDatabaseQueryResults(table_name, col_name, operation, value).data.objects[0].iteration;
 
-    table_name = 'roi';
-    col_name = 'id';
-    operation = '>';
-    value = 0;
-    let rois_query = getDatabaseQueryResults(table_name, col_name, operation, value)
+    let rois_query = getProjRois();
     let rois = rois_query.data.num_results;
     let rois_objects = rois_query.data.objects;
 

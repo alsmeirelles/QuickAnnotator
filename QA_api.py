@@ -124,7 +124,7 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
         roi_base_name = f'{filename.replace(".png", "_")}{x}_{y}_roi.png'
         roi_name = f'projects/{project_name}/roi/{roi_base_name}'
         nobjects = db.session.query(Roi).filter_by(imageId=newImage.id).count()
-        newRoi = Roi(name=roi_base_name, path=roi_name, alpath=img.getPath(), testingROI = 0, imageId=newImage.id,
+        newRoi = Roi(name=roi_base_name, projId=proj.id, path=roi_name, alpath=img.getPath(), testingROI = 0, imageId=newImage.id,
                     width=ps, height=ps, x=x, y=y, acq=proj.iteration, nobjects = nobjects,
                     date=datetime.now())
         db.session.add(newRoi)
@@ -822,7 +822,7 @@ def post_roimask(project_name, image_name):
 
     # ----
     parent_image = Image.query.filter_by(name=image_name, projId=proj.id).first()
-    rois = Roi.query.filter_by(imageId=parent_image.id)
+    rois = Roi.query.filter_by(imageId=parent_image.id,projId=proj.id)
     newRoi = None
     for r in rois:
         if abs(r.x-x) <= 2 and abs(r.y - y) <= 2:
@@ -830,7 +830,7 @@ def post_roimask(project_name, image_name):
         else:
             current_app.logger.info("Found ROI ({}) with different coordinates: ({},{}) against ({},{})".format(r.id,r.x,r.y,x,y))
             
-    if newRoi:
+    if not newRoi is None:
         current_app.logger.info("ROI already stored. Original patch: {}".format(newRoi.alpath))
         newRoi.nobjects = nobjects_roi
         newRoi.path = roi_name
@@ -1016,10 +1016,12 @@ def prevnext_image(project_name, image_name, direction):
         for i in range(len(images)):
             if images[i].id == curr_image.id:
                 return i
+
+        current_app.logger.error("Could not find current image: {}".format(image_name))
         return -1
             
     project = Project.query.filter_by(name=project_name).first()
-    curr_image = Image.query.filter_by(projId=project.id, name=image_name).first()
+    curr_image = Image.query.filter_by(projId=project.id, name=image_name,aliter=project.iteration).first()
 
     # To do: we can not prev the "first image" and "next" the last image, need to make it periodic
     #images = Image.query.filter((Image.aliter == curr_image.aliter) & (Image.projId == project.id)).all()

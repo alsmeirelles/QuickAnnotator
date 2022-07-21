@@ -134,7 +134,7 @@ def annotation(project_name, image_name):
     defaultCropSize = config.getint('common', 'patchsize', fallback=256)
 
     if image.nROIs > 0:
-        rois = db.session.query(Roi,Roi.path,Roi.x,Roi.y).filter_by(imageId=image.id,acq=project.iteration).all()
+        rois = db.session.query(Roi,Roi.path,Roi.x,Roi.y).filter_by(projId=project.id,imageId=image.id,acq=project.iteration).all()
         roi = rois[0]
         x,y = roi.x,roi.y
         forceCropSize = image.patch_size
