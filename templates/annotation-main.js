@@ -209,7 +209,7 @@ function init() {
 
         // the url's of the images to load upon initialization:
         let mask_url = "{{ url_for('api.get_mask', project_name=project.name, image_name=image.name)}}";
-        let superpixel_url = "{{ url_for('api.get_superpixels', project_name=project.name, image_name=image.name)}}";
+        let superpixel_url = "{{ url_for('api.get_superpixels', project_name=project.name, image_name=image.name,image_id=image.id)}}";
         let superpixel_boundary_url = "{{ url_for('api.get_superpixels_boundary', project_name=project.name, image_name=image.name)}}";
 
         // when the annotation mask is loaded, draw the mask:
@@ -350,9 +350,9 @@ function init() {
     }
     updateCropSize();
 
-    // Set to freehand mode until superpixels are ready
+    // Set to freehand mode until superpixels are ready - ALSM: changed to flood by default
     setToPositive();
-    setFreeHand();
+    setFlood();
 
     // restore the cursors
     restoreCursor();
@@ -429,6 +429,14 @@ shortcut.add("n", function() {
 
 shortcut.add("i", function() {
     imageInformationToggle();
+});
+
+shortcut.add("n", function() {
+    prevnext("next");
+});
+
+shortcut.add("p", function() {
+    prevnext("previous");
 });
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

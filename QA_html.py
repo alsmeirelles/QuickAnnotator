@@ -101,8 +101,8 @@ def embed_main(project_name):
     return render_template("embed-main.js", project_name=project_name)
 
 
-@html.route('/<project_name>/<image_name>/annotation', methods=['GET'])
-def annotation(project_name, image_name):
+@html.route('/<project_name>/<image_id>/annotation', methods=['GET'])
+def annotation(project_name, image_id):
     project = Project.query.filter_by(name=project_name).first()
 
     if not project:
@@ -127,19 +127,19 @@ def annotation(project_name, image_name):
                              (db.func.count(Roi.id) - db.func.ifnull(db.func.sum(Roi.testingROI), 0))
                              .label('nTrainingROIs')). \
         outerjoin(Roi, Roi.imageId == Image.id). \
-        filter(Image.name == image_name).filter(Image.projId == project.id).group_by(Image.id).first()
+        filter(Image.id == image_id).filter(Image.projId == project.id).group_by(Image.id).first()
 
     x = request.args.get('startX', "#")
     y = request.args.get('startY', "#")
     defaultCropSize = config.getint('common', 'patchsize', fallback=256)
 
     if image.nROIs > 0:
-        rois = db.session.query(Roi,Roi.path,Roi.x,Roi.y).filter_by(projId=project.id,imageId=image.id,acq=project.iteration).all()
+        rois = db.session.query(Roi,Roi.alpath,Roi.x,Roi.y).filter_by(projId=project.id,imageId=image.id,acq=project.iteration).all()
         roi = rois[0]
         x,y = roi.x,roi.y
         forceCropSize = image.patch_size
-        print("Rois in tile:\n {}".format("\n".join(["- X {}; Y {}".format(r.x,r.y) for r in rois])))
-        print("Image is a tile for patch: {}. Start (x,y): {}. Size: {}".format(roi.path,(x,y),defaultCropSize))
+        print("Rois in tile (id {}):\n {}".format(image_id,"\n".join(["- X {}; Y {}".format(r.x,r.y) for r in rois])))
+        print("Image is a tile for patch: {}. Start (x,y): {}. Size: {}".format(roi.alpath,(x,y),defaultCropSize))
     else:
         print("No tile for patch: {}".format(image_name))
         
@@ -148,9 +148,9 @@ def annotation(project_name, image_name):
 
 
 # For templates which just use the project and image name:
-def rendered_project_image(template_name, project_name, image_name):
+def rendered_project_image(template_name, project_name, image_name,image_id):
     project = Project.query.filter_by(name=project_name).first()
-    image = Image.query.filter_by(projId=project.id, name=image_name).first()
+    image = Image.query.filter_by(projId=project.id, id=image_id).first()
     defaultCropSize = config.getint('common', 'patchsize', fallback=256)
     if image.patch_size > 0:
         forceCropSize = image.patch_size
@@ -159,19 +159,19 @@ def rendered_project_image(template_name, project_name, image_name):
     return render_template(template_name, project=project, image=image, defaultCropSize=defaultCropSize,forceCropSize=forceCropSize)
 
 
-@html.route('/<project_name>/<image_name>/annotation-main.js', methods=['GET'])
-def annotation_main(project_name, image_name):
-    return rendered_project_image('annotation-main.js', project_name, image_name)
+@html.route('/<project_name>/<image_name>/<image_id>/annotation-main.js', methods=['GET'])
+def annotation_main(project_name, image_name,image_id):
+    return rendered_project_image('annotation-main.js', project_name, image_name,image_id)
 
 
-@html.route('/<project_name>/<image_name>/annotation-tool.js', methods=['GET'])
-def annotation_tool(project_name, image_name):
-    return rendered_project_image('annotation-tool.js', project_name, image_name)
+@html.route('/<project_name>/<image_name>/<image_id>/annotation-tool.js', methods=['GET'])
+def annotation_tool(project_name, image_name,image_id):
+    return rendered_project_image('annotation-tool.js', project_name, image_name,image_id)
 
 
-@html.route('/<project_name>/<image_name>/annotation-utils.js', methods=['GET'])
-def annotation_utils(project_name, image_name):
-    return rendered_project_image('annotation-utils.js', project_name, image_name)
+@html.route('/<project_name>/<image_name>/<image_id>/annotation-utils.js', methods=['GET'])
+def annotation_utils(project_name, image_name,image_id):
+    return rendered_project_image('annotation-utils.js', project_name, image_name,image_id)
 
 
 @html.route("/jobs", methods=['GET'])

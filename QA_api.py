@@ -96,16 +96,16 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
         if os.path.isfile(dest):
             newImage = db.session.query(Image).filter_by(projId=proj.id, name=tilename).first()
             if not newImage is None:
+                print(f"Tile with multiple patches ({tilename})")
+                print("Tile in db: {}".format(newImage))
                 if proj.iteration == newImage.aliter:
                     newImage = None
                 else:
                     newImage.aliter = proj.iteration
 
-                print(f"Tile with multiple patches ({tilename})")
-                print("Tile in db: {}".format(newImage))
         if os.path.isfile(pdest):
             return jsonify(error="Patch already exists")
-        #shutil.copy(img.getPath(),pdest)
+
         # Get image dimension
         dim = (config.getint("common","tilesize", fallback=2000),)*2
         #Patches are ROIs from the tile
@@ -598,7 +598,7 @@ def add_roi_to_traintest(project_name, traintype, roiname, roi_class):
 
     roi.anclass = 1 if roi_class == "positive" else 0
 
-    current_app.logger.info('Committing new image to database:')
+    current_app.logger.info('Committing annotation to database: {}'.format(roi_class))
     db.session.commit()
 
     return jsonify(success=True, roi=roi.as_dict()), 200
@@ -646,7 +646,8 @@ def delete_image(project_name, image_name):
     db.session.commit()
 
     # Remove the image file from server
-    os.remove(selected_image.path)
+    if os.path.isfile(selected_image.path):
+        os.remove(selected_image.path)
 
     # Remove the corresponding mask and result files
     # TODO: the below can be refactored to recursively look for *all* files which match the pattern and delete them
@@ -744,9 +745,9 @@ def get_roimask(project_name, roi_name):
     return response
 
 
-@api.route("/api/<project_name>/image/<image_name>/roimask", methods=["POST"])
-def post_roimask(project_name, image_name):
-    current_app.logger.info(f'Uploading roi mask for project {project_name} and image {image_name}:')
+@api.route("/api/<project_name>/image/<image_name>/<image_id>/roimask", methods=["POST"])
+def post_roimask(project_name, image_name,image_id):
+    current_app.logger.info(f'Uploading roi mask for project {project_name} and image {image_name} (id:{image_id}):')
     proj = Project.query.filter_by(name=project_name).first()
     if proj is None:
         return jsonify(error=f"project {project_name} doesn't exist"), 400
@@ -755,7 +756,7 @@ def post_roimask(project_name, image_name):
     force = request.form.get('force', False, type=bool)
 
     selected_image = db.session.query(Image).filter_by(projId=proj.id,
-                                                       name=image_name).first()
+                                                       id=image_id).first()
     if selected_image is None:
         return jsonify(error=f"{selected_image} inside of project {project_name} doesn't exist"), 400
 
@@ -821,9 +822,10 @@ def post_roimask(project_name, image_name):
     selected_image.nobjects = get_number_of_objects(mask)
 
     # ----
-    parent_image = Image.query.filter_by(name=image_name, projId=proj.id).first()
-    rois = Roi.query.filter_by(imageId=parent_image.id,projId=proj.id)
+    #parent_image = Image.query.filter_by(name=image_name, projId=proj.id).first()
+    rois = Roi.query.filter_by(imageId=selected_image.id,projId=proj.id).all()
     newRoi = None
+    current_app.logger.info('ROIs for image (id:{}): {}'.format(selected_image.id,len(rois)))
     for r in rois:
         if abs(r.x-x) <= 2 and abs(r.y - y) <= 2:
             newRoi = r
@@ -835,17 +837,16 @@ def post_roimask(project_name, image_name):
         newRoi.nobjects = nobjects_roi
         newRoi.path = roi_name
         db.session.commit()
+        return jsonify(success=True, roi=newRoi.as_dict()), 201
     else:
-        current_app.logger.info('Storing roi to database:')
-        
-        newRoi = Roi(name=roi_base_name, path=roi_name, imageId=parent_image.id,
-                    width=w, height=h, x=x, y=y, nobjects = nobjects_roi,
-                    date=datetime.now())
-        db.session.add(newRoi)
-        db.session.commit()
-
-    return jsonify(success=True, roi=newRoi.as_dict()), 201
-
+        #newRoi = Roi(name=roi_base_name, path=roi_name, imageId=selected_image.id,projId = proj.id,
+        #            width=w, height=h, x=x, y=y, nobjects = nobjects_roi,
+        #            date=datetime.now())
+        #db.session.add(newRoi)
+        #db.session.commit()
+        #current_app.logger.info('Storing roi to database: {}'.format(newRoi.id))
+        current_app.logger.info(f'No ROI in position ({x},{y}) for image {selected_image.id}')
+        return jsonify(error="ROI not found"), 400
 
 @api.route("/api/<project_name>/roi/<roi_name>", methods=["GET"])
 def get_roi(project_name, roi_name):
@@ -903,9 +904,9 @@ def get_prediction(project_name, image_name):
     return pool_get_image(project_name, command_name, full_command, full_fname, imageid=curr_image.id)
 
 
-@api.route("/api/<project_name>/image/<image_name>/superpixels", methods=["GET"])
-def get_superpixels(project_name, image_name):
-    current_app.logger.info(f'Getting superpixel for project {project_name} and image {image_name}')
+@api.route("/api/<project_name>/image/<image_name>/<image_id>/superpixels", methods=["GET"])
+def get_superpixels(project_name, image_name, image_id):
+    current_app.logger.info(f'Getting superpixel for project {project_name} and image {image_name} (id: {image_id})')
     latest_modelid = get_latest_modelid(project_name)
 
     force = request.args.get('force', False, type=bool)
@@ -916,7 +917,7 @@ def get_superpixels(project_name, image_name):
         return jsonify(error=f"Requested ModelID {modelidreq} greater than available models {latest_modelid}"), 400
 
     project = Project.query.filter_by(name=project_name).first()
-    curr_image = Image.query.filter_by(projId=project.id, name=image_name).first()
+    curr_image = Image.query.filter_by(projId=project.id, id=image_id).first()
     superpixel_modelid = curr_image.superpixel_modelid
     current_app.logger.info(f'The current superpixel_modelid of {image_name} = {str(superpixel_modelid)}')
 
@@ -1010,8 +1011,8 @@ def get_superpixels_boundary(project_name, image_name):
     return response
 
 
-@api.route("/api/<project_name>/image/<image_name>/<direction>", methods=["GET"])
-def prevnext_image(project_name, image_name, direction):
+@api.route("/api/<project_name>/image/<image_name>/<image_id>/<direction>", methods=["GET"])
+def prevnext_image(project_name, image_name, image_id, direction):
     def find_current(images,curr_image):
         for i in range(len(images)):
             if images[i].id == curr_image.id:
@@ -1021,7 +1022,7 @@ def prevnext_image(project_name, image_name, direction):
         return -1
             
     project = Project.query.filter_by(name=project_name).first()
-    curr_image = Image.query.filter_by(projId=project.id, name=image_name,aliter=project.iteration).first()
+    curr_image = Image.query.filter_by(projId=project.id, id=image_id,aliter=project.iteration).first()
 
     # To do: we can not prev the "first image" and "next" the last image, need to make it periodic
     #images = Image.query.filter((Image.aliter == curr_image.aliter) & (Image.projId == project.id)).all()
@@ -1047,7 +1048,7 @@ def prevnext_image(project_name, image_name, direction):
         errorMessage = "There is no " + direction + " image"
         return jsonify(error=errorMessage), 400
     else:
-        return jsonify(url=url_for('html.annotation', project_name=project_name, image_name=image.name)), 200
+        return jsonify(url=url_for('html.annotation', project_name=project_name, image_id=image.id)), 200
 
 
 # ---- config work

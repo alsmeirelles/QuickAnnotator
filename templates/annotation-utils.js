@@ -333,10 +333,10 @@ function prevnext(direction) {
        let url
        switch (direction) {
            case 'previous':
-               url = "{{ url_for('api.prevnext_image', project_name=project.name, image_name=image.name,direction='previous') }}"
+               url = "{{ url_for('api.prevnext_image', project_name=project.name, image_name=image.name,image_id=image.id, direction='previous') }}"
                break
            case 'next':
-               url = "{{ url_for('api.prevnext_image', project_name=project.name, image_name=image.name,direction='next') }}"
+               url = "{{ url_for('api.prevnext_image', project_name=project.name, image_name=image.name,image_id=image.id, direction='next') }}"
                break
        }
 

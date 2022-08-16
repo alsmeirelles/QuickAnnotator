@@ -33,12 +33,42 @@ function pollFunc(fn, timeout, interval) {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+function getIteration() {
+    let table_name = 'project';
+    let col_name = "id";
+    let operation = '==';
+    let value = "{{ project.id }}";
+
+    if ( typeof getIteration.iteration == 'undefined' ) {
+	getIteration.iteration = getDatabaseQueryResults(table_name, col_name, operation, value).data.objects[0].iteration;
+	getIteration.counter = 1;
+	return getIteration.iteration;
+    }
+    else {
+	if ( getIteration.counter > 4 ) {
+	    getIteration.iteration = getDatabaseQueryResults(table_name, col_name, operation, value).data.objects[0].iteration;
+	    getIteration.counter = 0;
+	}
+	else {
+	    getIteration.counter += 1;
+	}
+	return getIteration.iteration;
+    
+    }
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function updateImagePageButton() {
     //updateViewEmbed();
     //updateALStart();
     updateGenTraining();
     updateGetPatches();
+
+    iteration = getIteration();
+    if (iteration > 1) {
+	document.getElementById("makePredButton").disabled = false;
+	document.getElementById("makePredButton").title = "Predictions available.";
+    }
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,11 +138,7 @@ function getProjRois() {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function updateALStart() {
-    let table_name = 'project';
-    let col_name = "id";
-    let operation = '==';
-    let value = "{{ project.id }}";
-    let iteration = getDatabaseQueryResults(table_name, col_name, operation, value).data.objects[0].iteration;
+    let iteration = getIteration();
 
     let rois_query = getProjRois();
     let rois = rois_query.data.num_results;
@@ -152,11 +178,7 @@ function updateALStart() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function updateGetPatches() {
-    let table_name = 'project';
-    let col_name = "id";
-    let operation = '==';
-    let value = "{{ project.id }}";
-    let iteration = getDatabaseQueryResults(table_name, col_name, operation, value).data.objects[0].iteration;
+    let iteration = getIteration();
 
     let rois_query = getProjRois();
     let rois = rois_query.data.num_results;
@@ -180,8 +202,6 @@ function updateGetPatches() {
  		}
 	    }
 	}
-	document.getElementById("makePredButton").disabled = false;
-        document.getElementById("makePredButton").title = "Predictions available.";	
 	if (annotations == rois) {
             document.getElementById("getALBatch").disabled = false;
             document.getElementById("getALBatch").title = "A new patch set can be acquired.";
@@ -239,7 +259,7 @@ function updateMakeEmbed() {
     let operation = '==';
     let value = "{{ project.id }}";
     let train_ae_time = getDatabaseQueryResults(table_name, col_name, operation, value).data.objects[0].train_ae_time;
-    let iteration = getDatabaseQueryResults(table_name, col_name, operation, value).data.objects[0].iteration;
+    let iteration = getIteration();
     if (iteration == -1) {
         document.getElementById("makeEmbedButton").disabled = true;
         document.getElementById("makeEmbedButton").title = "'Embed Patches' is NOT ready to use.";
@@ -309,6 +329,9 @@ function get_al_batch() {
     addNotification("'Get Patch Set' Pressed. Active Learning system will acquire a new patch set for annotation.")
     addNotification("This may take a few minutes...")
 
+    document.getElementById("makePredButton").disabled = true;
+    document.getElementById("makePredButton").title = "Wait for new batch.";
+    
     pollFunc(updateGetPatches, 300000, 10000);
     const run_url = new URL("{{ url_for('api.get_al_patches', project_name=project.name) }}", window.location.origin);
     return loadObjectAndRetry(run_url, reload_images)

@@ -62,7 +62,7 @@
             <div class="responsive" id="{{ image.name }}">
                 <div class="gallery">
                     <div>
-                        <a target="_blank" href="{{ url_for('html.annotation', project_name = project.name , image_name = image.name) }}"><img src="{{ url_for('api.get_image_thumb',project_name = project.name, image_name= image.name) }}" height="200px"></a>
+                        <a target="_blank" href="{{ url_for('html.annotation', project_name = project.name , image_id=image.id) }}"><img src="{{ url_for('api.get_image_thumb',project_name = project.name, image_name= image.name) }}" height="200px"></a>
                         <a href="#" style="float:right; " onclick= "delete_image('{{ image.name }}')">X</a>
                     <div class="desc">{{ image["name"]}}</div>
                     <p align="center">{{image["width"]}} x {{image["height"]}}</p>

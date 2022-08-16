@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>QA - {{ project.name }}/{{ image.name }}</title>
+    <title>QA - {{ project.name }}/{{ image.name }} (ID:{{image.id}})</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-dialog.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/annotator.css') }}">
@@ -311,8 +311,8 @@
 
 <!-- The scripts for running the annotator system: -->
 <script src="{{ url_for('static', filename='js/annotation-vars.js') }}"></script>
-<script src="{{ url_for('html.annotation_utils', project_name=project.name, image_name=image.name) }}"></script>
-<script src="{{ url_for('html.annotation_tool' , project_name=project.name, image_name=image.name) }}"></script>
-<script src="{{ url_for('html.annotation_main' , project_name=project.name, image_name=image.name) }}"></script>
+<script src="{{ url_for('html.annotation_utils', project_name=project.name, image_name=image.name,image_id=image.id) }}"></script>
+<script src="{{ url_for('html.annotation_tool' , project_name=project.name, image_name=image.name,image_id=image.id) }}"></script>
+<script src="{{ url_for('html.annotation_main' , project_name=project.name, image_name=image.name,image_id=image.id) }}"></script>
 
 </html>

@@ -381,7 +381,7 @@ function uploadMaskToServer(dataset) {
 
     // upload the roi patch:
     uploadCanvasImage(
-        "{{ url_for('api.post_roimask', project_name=project.name, image_name=image.name)}}",
+        "{{ url_for('api.post_roimask', project_name=project.name, image_name=image.name, image_id=image.id)}}",
         "roimask", canvas_roi, fd, uploadCallback);
 
     alreadyMakingAnnotation = false;
