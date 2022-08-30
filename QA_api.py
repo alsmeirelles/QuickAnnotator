@@ -946,7 +946,7 @@ def get_superpixels(project_name, image_name, image_id):
                     f"-m./projects/{project_name}/models/{modelidreq}/best_model.pth",
                     f"-s./projects/{project_name}/superpixels/",
                     f"-o./projects/{project_name}/superpixels_boundary/",
-                    f"./projects/{project_name}/{image_name}", "--force"]
+                    f"./projects/{project_name}/{image_name}/{curr_image.id}", "--force"]
 
     current_app.logger.info(
         f'We are running {command_to_use} to generate superpixels for IMAGE {image_name} in PROJECT {project_name} ')

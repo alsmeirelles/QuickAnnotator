@@ -101,10 +101,14 @@ def add_async_job(project_id, command, parameters, arguments, what_to_run, image
     Base.prepare(QA_db.db.engine, reflect=True)
     newtableobj = Base.classes[jobtablename]
     newtableobj.__tablename__ = jobtablename
-    current_app.apimanager.create_api(newtableobj,
-                                      methods=['GET', 'POST', 'DELETE', 'PUT'],
-                                      url_prefix='/api/db',
-                                      results_per_page=0, max_results_per_page=0)
+    try:
+        current_app.apimanager.create_api(newtableobj,
+                                        methods=['GET', 'POST', 'DELETE', 'PUT'],
+                                        url_prefix='/api/db',
+                                        results_per_page=0, max_results_per_page=0)
+    except AssertionError as e:
+        print(e)
+        current_app.logger.info(f"Could not register {command}.")
 
     # for the whatToRun function, we will pass in a tuple containing
     # the arguments (which it must unpack itself), and the job id
