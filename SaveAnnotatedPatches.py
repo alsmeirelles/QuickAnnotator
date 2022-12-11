@@ -53,7 +53,7 @@ if __name__ == '__main__': #This seems like the correct place to do this
             .group_by(Roi.id).all()
 
     nrois = len(training_rois)
-    if config.n >= nrois:
+    if config.n is None or config.n >= nrois:
         config.n = nrois
         
     print("Found {} annotated ROIs.".format(nrois))
