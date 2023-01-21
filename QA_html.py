@@ -32,21 +32,33 @@ def index():
 
 @html.route('/<project_name>', methods=['GET'])
 @html.route('/<project_name>/images', methods=['GET'])
-def get_imagelist(project_name):
+@html.route('/<project_name>/testimages/<testing>', methods=['GET'])
+def get_imagelist(project_name,testing=0):
     # Get the image list for the project
     project = Project.query.filter_by(name=project_name).first()
 
     if not project:
         return render_template("error.html")
-
-    images = db.session.query(Image.id, Image.projId, Image.name, Image.path, Image.height, Image.width, Image.date,
-                              Image.rois, Image.make_patches_time, Image.npixel, Image.ppixel, Image.nobjects,
-                              db.func.count(Roi.id).label('ROIs'),
-                              (db.func.count(Roi.id) - db.func.ifnull(db.func.sum(Roi.testingROI), 0))
-                              .label('trainingROIs')). \
-        outerjoin(Roi, Roi.imageId == Image.id). \
-        filter(Image.projId == project.id).filter(Roi.acq == project.iteration).group_by(Image.id).all()
-    return render_template("images.html", project=project, images=images)
+    
+    if testing == 0:
+        images = db.session.query(Image.id, Image.projId, Image.name, Image.path, Image.height, Image.width, Image.date,
+                                Image.rois, Image.make_patches_time, Image.npixel, Image.ppixel, Image.nobjects,
+                                db.func.count(Roi.id).label('ROIs'),
+                                (db.func.count(Roi.id) - db.func.ifnull(db.func.sum(Roi.testingROI), 0))
+                                .label('trainingROIs')). \
+            outerjoin(Roi, Roi.imageId == Image.id). \
+            filter(Image.projId == project.id).filter(Roi.acq == project.iteration).filter(Roi.testingROI == 0).group_by(Image.id).all()
+    else:
+        images = db.session.query(Image.id, Image.projId, Image.name, Image.path, Image.height, Image.width, Image.date,
+                                Image.rois, Image.make_patches_time, Image.npixel, Image.ppixel, Image.nobjects,
+                                db.func.count(Roi.id).label('ROIs'),
+                                (db.func.count(Roi.id) - db.func.ifnull(db.func.sum(Roi.testingROI), 0))
+                                .label('trainingROIs')). \
+            outerjoin(Roi, Roi.imageId == Image.id). \
+            filter(Image.projId == project.id).filter(Roi.testingROI == 1).filter(Roi.anclass == -1).group_by(Image.id).all()
+        current_app.logger.info('Displaying TESTING ROIs: {}'.format(len(images)))
+        
+    return render_template("images.html", project=project, images=images,testing=testing)
 
 
 @html.route('/<project_name>/images/images-main', methods=['GET'])
@@ -102,7 +114,8 @@ def embed_main(project_name):
 
 
 @html.route('/<project_name>/<image_id>/annotation', methods=['GET'])
-def annotation(project_name, image_id):
+@html.route('/<project_name>/<image_id>/<testing>/annotation', methods=['GET'])
+def annotation(project_name, image_id, testing=0):
     project = Project.query.filter_by(name=project_name).first()
 
     if not project:
@@ -134,17 +147,20 @@ def annotation(project_name, image_id):
     defaultCropSize = config.getint('common', 'patchsize', fallback=256)
 
     if image.nROIs > 0:
-        rois = db.session.query(Roi,Roi.alpath,Roi.x,Roi.y).filter_by(projId=project.id,imageId=image.id,acq=project.iteration).all()
+        if not testing:
+            rois = db.session.query(Roi,Roi.alpath,Roi.x,Roi.y).filter_by(projId=project.id,imageId=image.id,acq=project.iteration).all()
+        else:
+            rois = db.session.query(Roi,Roi.alpath,Roi.x,Roi.y).filter_by(projId=project.id,imageId=image.id).all()
         roi = rois[0]
         x,y = roi.x,roi.y
         forceCropSize = image.patch_size
         print("Rois in tile (id {}):\n {}".format(image_id,"\n".join(["- X {}; Y {}".format(r.x,r.y) for r in rois])))
         print("Image is a tile for patch: {}. Start (x,y): {}. Size: {}".format(roi.alpath,(x,y),defaultCropSize))
     else:
-        print("No tile for patch: {}".format(image_name))
+        print("Image has no ROIs for this iteration: {}".format(image_name))
         
     return render_template("annotation.html", project=project, image=image, startX=x, startY=y,
-                           defaultCropSize=defaultCropSize,forceCropSize=forceCropSize)
+                           defaultCropSize=defaultCropSize,forceCropSize=forceCropSize,testing=testing)
 
 
 # For templates which just use the project and image name:

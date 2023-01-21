@@ -108,10 +108,14 @@ def execute_al_prediction(train,test,qa_config,proj_path,iteration):
 
     print("Annotated test patches: {}".format(len(test[0])))
     print("Test patches available in test dir ({}): {}".format(config.testdir,len(x_test)))
-    
-    test[0].extend(x_test)
-    test[1].extend(y_test)
 
+    if not x_test is None and not y_test is None:
+        test[0].extend(x_test)
+        test[1].extend(y_test)
+
+    if len(test[0]) == 0 or len(test[1]) == 0:
+        return (0,0)
+    
     if global_trainer is None:
         ts = importlib.import_module('Trainers',config.strategy)
         trainer = getattr(ts,config.strategy)(config)

@@ -62,7 +62,8 @@ function updateImagePageButton() {
     //updateALStart();
     updateGenTraining();
     updateGetPatches();
-
+    updateAnnTest();
+    
     iteration = getIteration();
     if (iteration > 1) {
 	document.getElementById("makePredButton").disabled = false;
@@ -81,6 +82,31 @@ function displayPred() {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function getProjRois() {
+    let table_name = 'roi';
+    let col_name = ["projId","testingROI"];
+    let operation = ['==','=='];
+    let value = ["{{ project.id }}",0];
+    
+    let rois_query = getDatabaseQueryResults(table_name, col_name, operation, value);
+
+    return rois_query;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function getTestingRois() {
+    let table_name = 'roi';
+    let col_name = ["projId","testingROI"];
+    let operation = ['==','=='];
+    let value = ["{{ project.id }}",1];
+    
+    let rois_query = getDatabaseQueryResults(table_name, col_name, operation, value);
+
+    return rois_query;
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function updateGenTraining() {
     let table_name = 'project';
@@ -125,16 +151,27 @@ function annotatedRois(image_id, elementID) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+function updateAnnTest() {
+    let rois_query = getTestingRois();
+    let rois = rois_query.data.num_results;
+    let rois_objects = rois_query.data.objects;
 
-function getProjRois() {
-    let table_name = 'roi';
-    let col_name = "projId";
-    let operation = '==';
-    let value = "{{ project.id }}";
-    
-    let rois_query = getDatabaseQueryResults(table_name, col_name, operation, value);
-
-    return rois_query;
+    if (rois > 0) {
+	document.getElementById("annTest").disabled = false;
+        document.getElementById("annTest").title = "Annotate testing patches.";
+	if (testing == 0) {
+	    document.getElementById("annTest").textContent = 'Annotate Test';
+	    //document.querySelector('#annTest').textContent = 'Annotate Test';
+	}
+	else {
+	    document.getElementById("annTest").textContent = 'Back to Training';
+	    //document.querySelector('#annTest').textContent = 'Back to Training';
+	}
+    }
+    else {
+	document.getElementById("annTest").disabled = true;
+        document.getElementById("annTest").title = "No testing patches to be annotated.";
+    }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 function updateALStart() {
@@ -335,6 +372,32 @@ function get_al_batch() {
     pollFunc(updateGetPatches, 300000, 10000);
     const run_url = new URL("{{ url_for('api.get_al_patches', project_name=project.name) }}", window.location.origin);
     return loadObjectAndRetry(run_url, reload_images)
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function annotateTest() {
+
+    if (testing == 0) {
+	addNotification("Showing test set patches for annotation.")
+
+	document.getElementById("getALBatch").disabled = true;
+	document.getElementById("getALBatch").title = "You are annotating the test set.";
+	document.getElementById("startAL").disabled = true;
+	document.getElementById("startAL").title = "You are annotating the test set.";
+	
+	const run_url = new URL("{{ url_for('html.get_imagelist', project_name=project.name, testing=1) }}", window.location.origin);
+	window.location.href = run_url;
+	//return loadObjectAndRetry(run_url)	
+    } else {
+	pollFunc(updateGetPatches, 300000, 10000);
+	document.getElementById("annTest").innerText = 'Annotate Test';
+	
+	const run_url = new URL("{{ url_for('html.get_imagelist', project_name=project.name) }}", window.location.origin);
+	window.location.href = run_url;
+	//return loadObjectAndRetry(run_url)
+    }
+    return true
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

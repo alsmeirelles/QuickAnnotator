@@ -34,11 +34,11 @@ function setToNegative() {
     resetClassButtonBackgrounds();
 }
 function setToUnknown(){
-	annotation_class = "unknown";
-	resetClassButtonBackgrounds();
+    annotation_class = "unknown";
+    resetClassButtonBackgrounds();
 }
 function setToPositive(){
-	annotation_class = "positive";
+    annotation_class = "positive";
     resetClassButtonBackgrounds();
 }
 
@@ -255,17 +255,17 @@ function prepareForUpload() {
         // We have three options here
         buttons: {
             // Remove the white background when making patches
-            "Training": function () {
-                addNotification("Adding to training dataset.");
-                $(this).dialog('close');
-                uploadMaskToServer('train')
-            },
+            "Confirm": function () {
+		if ( testing == 0 ) {
+                    addNotification("Adding to training dataset.");
+                    $(this).dialog('close');
+                    uploadMaskToServer('train')
+		} else {
             // Keep the white backgeound when making patches
-            "Testing": function () {
                 addNotification("Adding to testing dataset.");
                 $(this).dialog('close');
                 uploadMaskToServer('test');
-            },
+            }},
             // Simply close the dialog and return to original page
             "Cancel": function () {
                 addNotification("Canceling upload.");

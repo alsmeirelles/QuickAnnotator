@@ -333,12 +333,13 @@ function prevnext(direction) {
        let url
        switch (direction) {
            case 'previous':
-               url = "{{ url_for('api.prevnext_image', project_name=project.name, image_name=image.name,image_id=image.id, direction='previous') }}"
+               url = "{{ url_for('api.prevnext_image', project_name=project.name, image_name=image.name,image_id=image.id, direction='previous',testing='testing') }}"
                break
            case 'next':
-               url = "{{ url_for('api.prevnext_image', project_name=project.name, image_name=image.name,image_id=image.id, direction='next') }}"
+               url = "{{ url_for('api.prevnext_image', project_name=project.name, image_name=image.name,image_id=image.id, direction='next',testing='testing') }}"
                break
        }
+       url = url.replace(escape("testing"),testing);
 
        xhr.onreadystatechange = function(){
            if (this.readyState == 4 && this.status == 400) {

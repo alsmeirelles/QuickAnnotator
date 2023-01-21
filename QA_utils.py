@@ -84,6 +84,7 @@ def get_initial_train(cache):
     return generate_set(path=config.get('common','pool'),
                             n=config.getint('active_learning','initial_set'),
                             nval=config.getint('active_learning','val_size'),
+                            ntest=config.getint('active_learning','test_size',fallback=0),
                             cache=cache)
 
 ################################################################################

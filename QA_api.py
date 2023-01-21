@@ -59,17 +59,20 @@ def generate_train(project_name):
 
 #Multiprocess patch insertion
 def multiprocess_insert_patch(iset,proj,project_name,save_roi,processes):
-    """iset: tuple (training image set, validation set)"""
+    """iset: tuple (training image set, validation set, test set)"""
     with multiprocessing.Pool(processes=processes) as pool:
         results = [pool.apply_async(insert_patch_into_DB,(proj,project_name,i,save_roi)) for i in iset[0]]
         if not iset[1] is None:
             for v in iset[1]:
                 results.append(pool.apply_async(insert_patch_into_DB,(proj,project_name,v,save_roi)) )
+        if len(iset) == 3 and not iset[2] is None:
+            for v in iset[2]:
+                results.append(pool.apply_async(insert_patch_into_DB,(proj,project_name,v,save_roi,1)) )
         rt = [r.get() for r in results]
     return rt
 
 #Insert patches selected by other means other than user manual upload
-def insert_patch_into_DB(proj,project_name,img,save_roi):
+def insert_patch_into_DB(proj,project_name,img,save_roi,testingROI=0):
     #Make tile for patch
     tilename = None
     pdest = ""
@@ -124,7 +127,7 @@ def insert_patch_into_DB(proj,project_name,img,save_roi):
         roi_base_name = f'{filename.replace(".png", "_")}{x}_{y}_roi.png'
         roi_name = f'projects/{project_name}/roi/{roi_base_name}'
         nobjects = db.session.query(Roi).filter_by(imageId=newImage.id).count()
-        newRoi = Roi(name=roi_base_name, projId=proj.id, path=roi_name, alpath=img.getPath(), testingROI = 0, imageId=newImage.id,
+        newRoi = Roi(name=roi_base_name, projId=proj.id, path=roi_name, alpath=img.getPath(), testingROI = testingROI, imageId=newImage.id,
                     width=ps, height=ps, x=x, y=y, acq=proj.iteration, nobjects = nobjects,
                     date=datetime.now())
         db.session.add(newRoi)
@@ -1010,9 +1013,9 @@ def get_superpixels_boundary(project_name, image_name):
     response.headers['Expires'] = '-1'
     return response
 
-
 @api.route("/api/<project_name>/image/<image_name>/<image_id>/<direction>", methods=["GET"])
-def prevnext_image(project_name, image_name, image_id, direction):
+@api.route("/api/<project_name>/image/<image_name>/<image_id>/<direction>/<testing>", methods=["GET"])
+def prevnext_image(project_name, image_name, image_id, direction,testing=0):
     def find_current(images,curr_image):
         for i in range(len(images)):
             if images[i].id == curr_image.id:
@@ -1020,19 +1023,29 @@ def prevnext_image(project_name, image_name, image_id, direction):
 
         current_app.logger.error("Could not find current image: {}".format(image_name))
         return -1
-            
-    project = Project.query.filter_by(name=project_name).first()
-    curr_image = Image.query.filter_by(projId=project.id, id=image_id,aliter=project.iteration).first()
 
-    # To do: we can not prev the "first image" and "next" the last image, need to make it periodic
-    #images = Image.query.filter((Image.aliter == curr_image.aliter) & (Image.projId == project.id)).all()
-    images = db.session.query(Image.id, Image.projId, Image.name, Image.path, Image.height, Image.width, Image.date,
-                              Image.rois, Image.make_patches_time, Image.npixel, Image.ppixel, Image.nobjects,
-                              db.func.count(Roi.id).label('ROIs'),
-                              (db.func.count(Roi.id) - db.func.ifnull(db.func.sum(Roi.testingROI), 0))
-                              .label('trainingROIs')). \
-        outerjoin(Roi, Roi.imageId == Image.id). \
-        filter(Image.projId == project.id).filter(Roi.acq == project.iteration).group_by(Image.id).all()
+    print(f"TESTING: {testing}")
+    project = Project.query.filter_by(name=project_name).first()
+
+    if testing == 0:
+        curr_image = Image.query.filter_by(projId=project.id, id=image_id,aliter=project.iteration).first()
+        images = db.session.query(Image.id, Image.projId, Image.name, Image.path, Image.height, Image.width, Image.date,
+                                Image.rois, Image.make_patches_time, Image.npixel, Image.ppixel, Image.nobjects,
+                                db.func.count(Roi.id).label('ROIs'),
+                                (db.func.count(Roi.id) - db.func.ifnull(db.func.sum(Roi.testingROI), 0))
+                                .label('trainingROIs')). \
+            outerjoin(Roi, Roi.imageId == Image.id). \
+            filter(Image.projId == project.id).filter(Roi.testingROI == testing).filter(Roi.acq == project.iteration).group_by(Image.id).all()
+    else:
+        curr_image = Image.query.filter_by(projId=project.id, id=image_id).first()
+        images = db.session.query(Image.id, Image.projId, Image.name, Image.path, Image.height, Image.width, Image.date,
+                                Image.rois, Image.make_patches_time, Image.npixel, Image.ppixel, Image.nobjects,
+                                db.func.count(Roi.id).label('ROIs'),
+                                (db.func.count(Roi.id) - db.func.ifnull(db.func.sum(Roi.testingROI), 0))
+                                .label('trainingROIs')). \
+            outerjoin(Roi, Roi.imageId == Image.id). \
+            filter(Image.projId == project.id).filter(Roi.testingROI == testing).filter(Roi.anclass == -1).group_by(Image.id).all()
+            
     index = find_current(images,curr_image)
     
     if (direction == "previous"):
@@ -1048,7 +1061,7 @@ def prevnext_image(project_name, image_name, image_id, direction):
         errorMessage = "There is no " + direction + " image"
         return jsonify(error=errorMessage), 400
     else:
-        return jsonify(url=url_for('html.annotation', project_name=project_name, image_id=image.id)), 200
+        return jsonify(url=url_for('html.annotation', project_name=project_name, image_id=image.id, testing=testing)), 200
 
 
 # ---- config work

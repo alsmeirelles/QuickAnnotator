@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Text
+from sqlalchemy import Text,UniqueConstraint
 import sqlalchemy
 import logging
 from QA_config import get_database_uri
@@ -47,12 +47,13 @@ class Image(db.Model):
 
 
 class Roi(db.Model):
+    __table_args__ = (UniqueConstraint('projId','alpath',name='db_unique_roi'),)
     id = db.Column(db.Integer, primary_key=True)
     imageId = db.Column(db.Integer, db.ForeignKey('image.id'), nullable=False)
     projId = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     name = db.Column(db.Text)
     path = db.Column(db.Text)
-    alpath = db.Column(db.Text, unique=True) #Original patch to AL
+    alpath = db.Column(db.Text)#, unique=True) #Original patch to AL
     testingROI = db.Column(db.Integer, default=-1)
     height = db.Column(db.Integer)
     width = db.Column(db.Integer)

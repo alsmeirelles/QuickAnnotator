@@ -58,7 +58,7 @@ def makeImg(path,keep=False):
 
     return img
 
-def generate_set(path,n,nval,cache='.cache',processes=2):
+def generate_set(path,n,nval,ntest=0,cache='.cache',processes=2):
     """
     Returns and ndarray of randomly selected items from data pool
     """
@@ -92,17 +92,30 @@ def generate_set(path,n,nval,cache='.cache',processes=2):
     val_idx = None
     val_set = None
     if nval > 0:
-        val_idx = val_idx = np.random.choice(np.setdiff1d(np.arange(rt.shape[0]),train_idx),nval,replace=False)
+        val_idx = np.random.choice(np.setdiff1d(np.arange(rt.shape[0]),train_idx),nval,replace=False)
         val_set = rt[val_idx]
         with open(os.path.join(cache,'val_set.pik'),'wb') as fd:
             pickle.dump(val_set,fd)
     #Update pool
     remove = train_idx if val_idx is None else np.concatenate((train_idx,val_idx),axis=0) 
+
+
+    #Select test set if ntest > 0
+    test_idx = None
+    test_set = None    
+    if ntest > 0:
+        test_idx = np.random.choice(np.setdiff1d(np.arange(rt.shape[0]),remove),ntest,replace=False)
+        test_set = rt[test_idx]
+        with open(os.path.join(cache,'test_set.pik'),'wb') as fd:
+            pickle.dump(test_set,fd)
+
+    remove = remove if test_idx is None else np.concatenate((remove,test_idx),axis=0) 
     pool = np.delete(rt,remove)
+    
     with open(os.path.join(cache,'spool.pik'),'wb') as fd:
         pickle.dump(pool,fd)
     
-    return (train_set,val_set)
+    return (train_set,val_set,test_set)
     
 if __name__ == "__main__":
 

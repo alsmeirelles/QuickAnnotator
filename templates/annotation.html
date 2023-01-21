@@ -20,6 +20,7 @@
         {#We are going to change the name of the variable here since we have are actually image#}
         let projTrainingROIs = parseInt("{{ image.trainingROIs }}");
         let projROIs = parseInt("{{ image.ROIs }}");
+        let testing = parseInt("{{ testing }}");
 
     </script>
     <script src="{{ url_for('static', filename='js/jquery-3.5.0.js') }}"></script>
@@ -303,7 +304,7 @@
             <label for="radio_unknown">&nbsp;Fill with unknown</label>
             <hr>
         </div>
-        Do you want to add this annotation to the training dataset or testing dataset?
+        Do you want to add this annotation to the dataset?
     </div>
 
 </div>

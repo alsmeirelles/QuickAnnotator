@@ -9,7 +9,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/imageselection.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/logs.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-ui.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/jquery-ui.css') }}">
+    <script>
+
+        let testing = parseInt("{{ testing }}");
+
+    </script>
     {#    Jquery need to be laoded before bootstrap, other wise it will cause error#}
     <script src="{{ url_for('static', filename='js/angular.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery-3.5.0.js') }}"></script>
@@ -47,7 +52,8 @@
         <a><button id="initialTraining" disabled class= "btn btn-default" onclick= "generate_train()"><span class="buttonFont" >Generate Training Set</span></button></a>
         <a><button id="startAL" disabled class= "btn btn-default" onclick= "start_al()"><span class="buttonFont">Start AL</span></button></a>
         <a><button id="getALBatch" disabled class= "btn btn-default" onclick= "get_al_batch()"><span class="buttonFont">Get Patch Set</span></button></a>
-        <a><button id="makePredButton" disabled class= "btn btn-default" onclick= "make_prediction()"><span class="buttonFont">Make  Prediction</span></button></a>
+        <a><button id="annTest" disabled class= "btn btn-default" onclick= "annotateTest()"><span class="buttonFont">Annotate Test</span></button></a>
+        <a><button id="makePredButton" disabled class= "btn btn-default" onclick= "make_prediction()"><span class="buttonFont">Make Prediction</span></button></a>
         <dt>Last predictions</dt>
 	  <dd id="pred">AUC: -;   Accuracy: -</dd>
         <br><br>
@@ -62,7 +68,7 @@
             <div class="responsive" id="{{ image.name }}">
                 <div class="gallery">
                     <div>
-                        <a target="_blank" href="{{ url_for('html.annotation', project_name = project.name , image_id=image.id) }}"><img src="{{ url_for('api.get_image_thumb',project_name = project.name, image_name= image.name) }}" height="200px"></a>
+                        <a target="_blank" href="{{url_for('html.annotation', project_name = project.name ,image_id=image.id, testing=testing) }}"><img src="{{ url_for('api.get_image_thumb',project_name = project.name, image_name= image.name) }}" height="200px"></a>
                         <a href="#" style="float:right; " onclick= "delete_image('{{ image.name }}')">X</a>
                     <div class="desc">{{ image["name"]}}</div>
                     <p align="center">{{image["width"]}} x {{image["height"]}}</p>
