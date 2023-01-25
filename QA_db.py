@@ -47,7 +47,6 @@ class Image(db.Model):
 
 
 class Roi(db.Model):
-    __table_args__ = (UniqueConstraint('projId','alpath',name='db_unique_roi'),)
     id = db.Column(db.Integer, primary_key=True)
     imageId = db.Column(db.Integer, db.ForeignKey('image.id'), nullable=False)
     projId = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
@@ -63,7 +62,8 @@ class Roi(db.Model):
     anclass = db.Column(db.Integer,default=-1) #ROI fill class
     nobjects = db.Column(db.Integer, default=0)
     date = db.Column(db.DateTime)
-
+    __table_args__ = (UniqueConstraint('projId','alpath',name='db_unique_roi'),)
+    
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 

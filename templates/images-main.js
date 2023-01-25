@@ -141,10 +141,15 @@ function annotatedRois(image_id, elementID) {
     let iteration = getDatabaseQueryResults(table_name, col_name, operation, value).data.objects[0].iteration;    
 
     let annotations = 0;
-    //addNotification(`Checking annotations for AL start.`);
     for (let i = 0; i < rois; i++) {
-	if((rois_objects[i].anclass >= 0) && (iteration == rois_objects[i].acq)) {
-	    annotations += 1;
+	if (testing == 0) {
+	    if((rois_objects[i].anclass >= 0) && (iteration == rois_objects[i].acq)) {
+		annotations += 1;
+	    }
+	} else {
+	    if(rois_objects[i].anclass >= 0) {
+		annotations += 1
+	    }
 	}
     }
     document.getElementById(elementID).innerHTML = annotations;

@@ -27,7 +27,7 @@ def execute_al_prediction(train,test,qa_config,proj_path,iteration):
     #Data
     kwargs['data'] = "CellRep"
     kwargs['predst'] = qa_config.get("common","pool").rstrip('/')
-    kwargs['testdir'] = qa_config.get("common","testset").rstrip('/')
+    kwargs['testdir'] = qa_config.get("common","testset",fallback="").rstrip('/')
     kwargs['split'] = (0.9,0.01,0.09)
     kwargs['tdim'] = (qa_config.getint("active_learning","input_size"),)*2
     kwargs['delay_load'] = True
@@ -106,13 +106,13 @@ def execute_al_prediction(train,test,qa_config,proj_path,iteration):
     ds = getattr(dsm,config.data)(config.predst,config.keepimg,config)
     x_test,y_test = ds.run_dir(config.testdir)
 
-    print("Annotated test patches: {}".format(len(test[0])))
-    print("Test patches available in test dir ({}): {}".format(config.testdir,len(x_test)))
-
     if not x_test is None and not y_test is None:
         test[0].extend(x_test)
         test[1].extend(y_test)
+        print("Test patches available in test dir ({}): {}".format(config.testdir,len(x_test)))
 
+    print("TOTAL Annotated test patches: {}".format(len(test[0])))
+    
     if len(test[0]) == 0 or len(test[1]) == 0:
         return (0,0)
     
