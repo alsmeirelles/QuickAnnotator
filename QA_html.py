@@ -40,6 +40,7 @@ def get_imagelist(project_name,testing=0):
     if not project:
         return render_template("error.html")
     
+    testing = int(testing)
     if testing == 0:
         images = db.session.query(Image.id, Image.projId, Image.name, Image.path, Image.height, Image.width, Image.date,
                                 Image.rois, Image.make_patches_time, Image.npixel, Image.ppixel, Image.nobjects,

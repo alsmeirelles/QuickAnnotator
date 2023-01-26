@@ -1024,7 +1024,7 @@ def prevnext_image(project_name, image_name, image_id, direction,testing=0):
         current_app.logger.error("Could not find current image: {}".format(image_name))
         return -1
 
-    print(f"TESTING: {testing}")
+    testing = int(testing)
     project = Project.query.filter_by(name=project_name).first()
 
     if testing == 0:
@@ -1049,7 +1049,7 @@ def prevnext_image(project_name, image_name, image_id, direction,testing=0):
     index = find_current(images,curr_image)
     
     if (direction == "previous"):
-        index = index-1 if index > 0 else -1
+        index = index-1 if index > 0 else index
     else:
         index = index+1 if index < len(images)-1 else -1
 
