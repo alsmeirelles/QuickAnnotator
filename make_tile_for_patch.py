@@ -23,8 +23,11 @@ import multiprocessing
 import argparse
 from PIL import Image
 
-pf_form = '(UN-(?P<unc>[0-9])+-){,1}(?P<tcga>TCGA-.*-.*-.*-.*-.*)-(?P<x>[0-9]+)-(?P<y>[0-9]+)-(?P<s1>[0-9]+)-(?P<s2>[0-9]+)(_(?P<lb>[01])){,1}\\.png'
-wsi_form = '(?P<tcga>TCGA)-(?P<tss>[\\w]{2})-(?P<part>[\\w]{4})-(?P<sample>[\\d]{2}[A-Z]{0,1})-(?P<portion>[\\d]{2}[A-Z]{0,1})-(?P<plate>[\\w]{3}){0,1}'
+#wsi_form = '(?P<tcga>TCGA)-(?P<tss>[\\w]{2})-(?P<part>[\\w]{4})-(?P<sample>[\\d]{2}[A-Z]{0,1})-(?P<portion>[\\d]{2}[A-Z]{0,1})-(?P<plate>[\\w]{3}){0,1}'
+#pf_form = '(UN-(?P<unc>[0-9])+-){,1}(?P<tcga>TCGA-.*-.*-.*-.*-.*)-(?P<x>[0-9]+)-(?P<y>[0-9]+)-(?P<s1>[0-9]+)-(?P<s2>[0-9]+)(_(?P<lb>[01])){,1}\\.png'
+
+pf_form = '(UN-(?P<unc>[0-9])+-){,1}(?P<tcga>TCGA-.*-.*-.*-.*-.*(\\.(.*)){,1})-(?P<x>[0-9]+)-(?P<y>[0-9]+)-(?P<s1>[0-9]+)-(?P<s2>[0-9]+)(_(?P<lb>[01])){,1}\\.png'
+wsi_form = '(?P<tcga>TCGA)-(?P<tss>[\\w]{2})-(?P<part>[\\w]{4})-(?P<sample>[\\d]{2}[A-Z]{0,1})-(?P<portion>[\\d]{2}[A-Z]{0,1})-(?P<plate>[\\w]{3}){0,1}(\\.[\\w]{8}(-[\\w]{4}){3}-[\\w]{12}){,1}'
 
 def check_existing_tile(patch_name,tile_dest):
 
